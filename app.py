@@ -16,7 +16,7 @@ module = st.selectbox(
     }[x]
 )
 
-# 2. Render Sub-types dynamically
+# 2. Render Sub-types dynamically based on selection
 if module == "INVENTORY_CALC":
     sub_type = st.selectbox(
         "2. Formula & Condition Sub-type",
@@ -29,44 +29,53 @@ if module == "INVENTORY_CALC":
         }[x]
     )
 else:
-    sub_type = st.selectbox("2. Formula & Condition Sub-type", ["STANDARD"], format_func=lambda x: "Standard Production Matrix")
+    sub_type = st.selectbox(
+        "2. Formula & Condition Sub-type", 
+        ["STANDARD"], 
+        format_func=lambda x: "Standard Production Matrix"
+    )
 
 st.write("---")
 st.write("### 3. Structural Fields to Add")
 
 parts = []
+v_inv = False
+v_nd = False
+unproc = False
 
-# 3. Handle parameters per module securely
+# 3. Define unique checkbox fields per module block up front
 if module == "FACILITY":
-    if st.checkbox("Channel Identifier Match (CHANNEL)"):
+    if st.checkbox("Channel Identifier Match (CHANNEL)", key="fac_chan"):
         parts.append("#saleOrder.channel.code == 'CHANNEL'")
-    if st.checkbox("Live Available Inventory Snapshot"):
+    if st.checkbox("Live Available Inventory Snapshot", key="fac_inv"):
         parts.append("#allocationCriteria.hasInventory()")
-    if st.checkbox("Short Term Operational Inventory Check"):
+    if st.checkbox("Short Term Operational Inventory Check", key="fac_st_inv"):
         parts.append("#allocationCriteria.hasShortTermInventory()")
-    if st.checkbox("Complete Short Term Stock Check"):
+    if st.checkbox("Complete Short Term Stock Check", key="fac_comp_st_inv"):
         parts.append("#allocationCriteria.hasCompleteShortTermInventory()")
-    if st.checkbox("State Restriction Rule (STATE)"):
+    if st.checkbox("State Restriction Rule (STATE)", key="fac_state"):
         parts.append("#saleOrderItem.shippingAddress.stateCode == 'STATE'")
-    if st.checkbox("Multi-Pincode Parsing Array (PINCODES)"):
+    if st.checkbox("Multi-Pincode Parsing Array (PINCODES)", key="fac_pin"):
         parts.append("T(com.unifier.core.utils.StringUtils).equalsAny(#saleOrder.saleOrderItems.iterator().next().shippingAddress.pincode, PINCODES)")
 
 elif module == "SHIPPING_FWD":
-    if st.checkbox("Channel Flow Route (CHANNEL)"):
+    if st.checkbox("Channel Flow Route (CHANNEL)", key="shp_chan"):
         parts.append("#shippingPackage.saleOrder.channel.code.toUpperCase() == 'CHANNEL'")
-    if st.checkbox("Weight Metric Range Boundaries"):
+    if st.checkbox("Weight Metric Range Boundaries", key="shp_weight"):
         parts.append("#shippingPackage.actualWeight > MIN_WEIGHT and #shippingPackage.actualWeight < MAX_WEIGHT")
-    if st.checkbox("Strict COD Payment Method Condition"):
+    if st.checkbox("Strict COD Payment Method Condition", key="shp_cod"):
         parts.append("#shippingPackage.saleOrder.paymentMethod.code == 'COD'")
-    if st.checkbox("Strict Prepaid Payment Method Condition"):
+    if st.checkbox("Strict Prepaid Payment Method Condition", key="shp_prepaid"):
         parts.append("#shippingPackage.saleOrder.paymentMethod.code == 'PREPAID'")
 
 elif module == "INVENTORY_CALC":
-    v_inv = st.checkbox("Add Virtual Inventory Multiplier")
-    v_nd = st.checkbox("Add Vendor Catalog Inventory Pool")
-    unproc = st.checkbox("Add Unprocessed Order Inventory Count (Amazon Flex)")
+    v_inv = st.checkbox("Add Virtual Inventory Multiplier", key="calc_virt_inv")
+    v_nd = st.checkbox("Add Vendor Catalog Inventory Pool", key="calc_vend_inv")
+    unproc = st.checkbox("Add Unprocessed Order Inventory Count (Amazon Flex)", key="calc_unproc_inv")
 
-# 4. Compiler logic Execution
+st.write("")
+
+# 4. Compiler execution logic card
 if st.button("Generate Formula Code", type="primary"):
     final_output = ""
     
@@ -78,11 +87,14 @@ if st.button("Generate Formula Code", type="primary"):
             
     elif module == "INVENTORY_CALC":
         inv_part = "#inventorySnapshot.inventory"
-        if v_inv: inv_part += " + #inventorySnapshot.virtualInventory"
-        if v_nd:  inv_part += " + #inventorySnapshot.vendorInventory"
+        if v_inv: 
+            inv_part += " + #inventorySnapshot.virtualInventory"
+        if v_nd:  
+            inv_part += " + #inventorySnapshot.vendorInventory"
         
         deduct_part = "- #inventorySnapshot.openSale - #pendency - (#failedOrderInventory?:0) - #inventoryBlockedOnOtherChannels - #inventorySnapshot.pendingInventoryAssessment"
-        if unproc: deduct_part += " + #unprocessedOrderInventory"
+        if unproc: 
+            deduct_part += " + #unprocessedOrderInventory"
         
         core_expr = f"{inv_part} {deduct_part}"
         
