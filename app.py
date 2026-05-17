@@ -5,6 +5,12 @@ st.set_page_config(page_title="UniCommerce Production Engine Suite", layout="cen
 st.title("⚡ UniCommerce Production Engine Suite")
 st.caption("Secure Internal Tokenized Rule Blueprint Generator")
 
+# --- INITIALIZE VARIABLES GLOBALLY TO PREVENT SCOPING ERRORS ---
+parts = []
+v_inv = False
+v_nd = False
+unproc = False
+
 # 1. Module Selector
 module = st.selectbox(
     "1. System Rule Module",
@@ -38,12 +44,7 @@ else:
 st.write("---")
 st.write("### 3. Structural Fields to Add")
 
-parts = []
-v_inv = False
-v_nd = False
-unproc = False
-
-# 3. Define unique checkbox fields per module block up front
+# 3. Define unique checkbox fields per module block
 if module == "FACILITY":
     if st.checkbox("Channel Identifier Match (CHANNEL)", key="fac_chan"):
         parts.append("#saleOrder.channel.code == 'CHANNEL'")
@@ -94,7 +95,7 @@ if st.button("Generate Formula Code", type="primary"):
         
         deduct_part = "- #inventorySnapshot.openSale - #pendency - (#failedOrderInventory?:0) - #inventoryBlockedOnOtherChannels - #inventorySnapshot.pendingInventoryAssessment"
         if unproc: 
-            deduct_part += " + #unprocessedOrderInventory"
+            inv_part += " + #unprocessedOrderInventory" # Adjusted structure based on system rules
         
         core_expr = f"{inv_part} {deduct_part}"
         
