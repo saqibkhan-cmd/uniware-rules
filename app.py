@@ -3,7 +3,7 @@ import streamlit as st
 st.set_page_config(page_title="UniCommerce Production Engine Suite", layout="wide")
 
 st.title("⚡ UniCommerce Production Engine Suite")
-st.caption("Clean, Safe Multi-Parameter Rule Compiler Matrix with Hover Tooltips")
+st.caption("Complete Multi-Parameter Rule Compiler Matrix with Simple Explanations")
 
 # 1. Primary Module System Selection
 module = st.selectbox(
@@ -59,29 +59,31 @@ def format_pincode_array(raw_input, var_name):
 
 parts = []
 
+# =====================================================================
 # --- FACILITY ALLOCATION LAYOUT ---
+# =====================================================================
 if module == "FACILITY":
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("📦 Core System Identifiers")
         
         if st.checkbox("Enable Channel / Store Constraints", key="fac_chk_chan", 
-                       help="Routes orders based on where they originated (e.g., Amazon, Shopify, Flipkart)."):
+                       help="Checks where the order came from (like Amazon or Shopify) to pick the warehouse. \n\nHow to type it:\n- For 1 store: AMAZON_IN\n- For multiple stores use commas: AMAZON_IN, FLIPKART, MEESHO"):
             c_in = st.text_input("Enter Channel Code(s):", placeholder="Single: AMAZON_IN   |   Multiple: AMAZON_IN, FLIPKART, MEESHO", key="fac_inp_chan")
             if c_in: parts.append(smart_format_string(c_in.upper(), "#saleOrder.channel.code"))
 
         if st.checkbox("Enable SKU / Catalog Constraints", key="fac_chk_sku", 
-                       help="Routes orders containing specific inventory SKU codes to dedicated warehouses."):
+                       help="Checks the item product code (SKU) to assign it to a specific warehouse.\n\nHow to type it:\n- For 1 item: SKU-XYZ\n- For multiple items use commas: SKU-A, SKU-B, SKU-C"):
             s_in = st.text_input("Enter Target Item SKU(s):", placeholder="Single: SKU-XYZ   |   Multiple: SKU-A, SKU-B, SKU-C", key="fac_inp_sku")
             if s_in: parts.append(smart_format_string(s_in, "#saleOrderItem.itemSkuCode"))
 
         if st.checkbox("Enable Combo / Bundle SKU Constraints", key="fac_chk_bsku", 
-                       help="Checks if the item is part of a bundled kit or promo package set."):
+                       help="Checks if the item is part of a special kit, combo set, or multi-pack bundle.\n\nHow to type it:\n- For 1 bundle: BUNDLE-01\n- For multiple bundles use commas: BUNDLE-A, BUNDLE-B"):
             b_in = st.text_input("Enter Bundle SKU(s):", placeholder="Single: BUNDLE-01   |   Multiple: BUNDLE-A, BUNDLE-B", key="fac_inp_bsku")
             if b_in: parts.append(smart_format_string(b_in, "#saleOrderItem.bundleSkuCode"))
 
         if st.checkbox("Enable Specific Order Tag Constraints", key="fac_chk_tag", 
-                       help="Triggers when a custom flag or operational tag is attached to an order (e.g., VIP, HIGH_VALUE)."):
+                       help="Checks for custom flags or text labels manually or automatically placed on an order.\n\nHow to type it:\n- Type exactly how your label is spelled, for example: HIGH_VALUE or VIP_ORDER"):
             t_in = st.text_input("Enter Order Tag Target String:", placeholder="Example: HIGH_VALUE_B2B", key="fac_inp_tag")
             if t_in: parts.append(f"T(com.unifier.core.utils.StringUtils).equalsAny(#saleOrder.tag, '{t_in.strip()}')")
 
@@ -89,59 +91,62 @@ if module == "FACILITY":
         st.subheader("📈 Warehouse Stock Status Triggers")
         
         if st.checkbox("Enforce Direct Active Warehouse Inventory Match", key="fac_chk_f_inv", 
-                       help="Ensures the warehouse actually has physical inventory available right now before assigning the order."):
+                       help="The system will only use this rule if the selected warehouse actually has real, physical stock available on the shelf right now."):
             parts.append("#allocationCriteria.hasInventory()")
             
         if st.checkbox("Enforce Complete Short-Term Catalog Stock Verification", key="fac_chk_f_st_inv", 
-                       help="Advanced Uniware logic verifying full multi-item short term supplier stock commits."):
+                       help="The system checks and ensures that all upcoming short-term stock updates are fully verified before routing this order."):
             parts.append("#allocationCriteria.hasCompleteShortTermInventory()")
 
     with col2:
         st.subheader("🗺️ Destination & Shipment Rules")
         
         if st.checkbox("Enable Destination City Constraints", key="fac_chk_city", 
-                       help="Routes orders to warehouses closest to the customer's city to ensure faster delivery."):
+                       help="Checks the customer's delivery city name to route the order to the closest warehouse.\n\nHow to type it:\n- For 1 city: AGRA\n- For multiple cities use commas: AGRA, NEW DELHI, FARIDABAD"):
             ci_in = st.text_input("Enter City Target Name(s):", placeholder="Single: AGRA   |   Multiple: AGRA, NEW DELHI, FARIDABAD", key="fac_inp_city")
             if ci_in: parts.append(smart_format_string(ci_in.upper(), "#saleOrderItem.shippingAddress.city", use_ignore_case=True))
 
         if st.checkbox("Enable Destination State Constraints", key="fac_chk_state", 
-                       help="Filters routing boundaries using standardized 2-letter state codes."):
+                       help="Filters routing using the customer's short 2-letter delivery state code.\n\nHow to type it:\n- For 1 state: DL\n- For multiple states use commas: DL, HR, UP"):
             st_in = st.text_input("Enter 2-Letter State Code(s):", placeholder="Single: DL   |   Multiple: DL, HR, UP", key="fac_inp_state")
             if st_in: parts.append(smart_format_string(st_in.upper(), "#saleOrderItem.shippingAddress.stateCode"))
 
         if st.checkbox("Enable Destination Pincode Grid Array Constraints", key="fac_chk_pin", 
-                       help="The most precise geographical filter. Compiles automatically into a single-quoted curly bracket array string."):
+                       help="The most exact delivery filter. Type your list of pincodes separated by commas, and the app will automatically build a safe bracket list format for Uniware.\n\nHow to type it:\n- Example: 110001, 110002, 400001"):
             p_in = st.text_area("Enter Pincode List:", placeholder="Example: 110001, 110002, 400001", key="fac_inp_pin")
             if p_in: parts.append(format_pincode_array(p_in, "#saleOrder.saleOrderItems.iterator().next().shippingAddress.pincode"))
 
         if st.checkbox("Enable Destination Country Validation", key="fac_chk_country", 
-                       help="Isolates orders using country codes (e.g., IN for India) to distinguish international from domestic orders."):
+                       help="Filters orders by the destination country initials to keep domestic and international shipments separated.\n\nHow to type it:\n- Example: IN (for India) or US (for United States)"):
             co_in = st.text_input("Enter Destination ISO Country Code:", placeholder="Example: IN", max_chars=3, key="fac_inp_country")
             if co_in: parts.append(f"#saleOrderItem.shippingAddress.countryCode == '{co_in.strip().upper()}'")
 
+
+# =====================================================================
 # --- SHIPPING PROVIDER LAYOUT ---
+# =====================================================================
 elif module == "SHIPPING_FWD":
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("📦 Package System Identifiers")
         
         if st.checkbox("Enable Channel / Store Constraints", key="shp_chk_chan", 
-                       help="Allocates couriers based on the originating channel package parameters (#shippingPackage syntax)."):
+                       help="Assigns courier partners based on which store the package was sold from.\n\nHow to type it:\n- For 1 store: AMAZON_IN\n- For multiple stores use commas: AMAZON_IN, FLIPKART, MEESHO"):
             c_in = st.text_input("Enter Channel Code(s):", placeholder="Single: AMAZON_IN   |   Multiple: AMAZON_IN, FLIPKART, MEESHO", key="shp_inp_chan")
             if c_in: parts.append(smart_format_string(c_in.upper(), "#shippingPackage.saleOrder.channel.code.toUpperCase()"))
 
         if st.checkbox("Enable SKU / Catalog Constraints", key="shp_chk_sku", 
-                       help="Selects logistics partners based on specific item SKUs inside the package (useful for fragile/bulky items)."):
+                       help="Assigns couriers based on the actual items sitting inside the package box (great for separating heavy or fragile items).\n\nHow to type it:\n- For 1 item: SKU-XYZ\n- For multiple items use commas: SKU-A, SKU-B, SKU-C"):
             s_in = st.text_input("Enter Target Item SKU(s):", placeholder="Single: SKU-XYZ   |   Multiple: SKU-A, SKU-B, SKU-C", key="shp_inp_sku")
             if s_in: parts.append(smart_format_string(s_in, "#shippingPackage.shippingPackageItems[0].channelItemCode"))
 
         if st.checkbox("Enable Combo / Bundle SKU Constraints", key="shp_chk_bsku", 
-                       help="Applies logistics rules based on active promotional combo packages inside the box."):
+                       help="Assigns couriers based on active promotional combo kits or multi-packs inside the package.\n\nHow to type it:\n- For 1 bundle: BUNDLE-01\n- For multiple bundles use commas: BUNDLE-A, BUNDLE-B"):
             b_in = st.text_input("Enter Bundle SKU(s):", placeholder="Single: BUNDLE-01   |   Multiple: BUNDLE-A, BUNDLE-B", key="shp_inp_bsku")
             if b_in: parts.append(smart_format_string(b_in, "#shippingPackage.shippingPackageItems[0].bundleSkuCode"))
 
         if st.checkbox("Enable Specific Order Tag Constraints", key="shp_chk_tag", 
-                       help="Allocates premium/secure shipping providers for packages tagged with custom operational flags."):
+                       help="Routes packages using specific couriers based on custom labels added to the order.\n\nHow to type it:\n- Type the exact name of the label, for example: VIP_ORDER or FRAGILE"):
             t_in = st.text_input("Enter Order Tag Target String:", placeholder="Example: HIGH_VALUE_B2B", key="shp_inp_tag")
             if t_in: parts.append(f"T(com.unifier.core.utils.StringUtils).equalsAny(#shippingPackage.saleOrder.tag, '{t_in.strip()}')")
 
@@ -149,22 +154,22 @@ elif module == "SHIPPING_FWD":
         st.subheader("🗺️ Destination Logistics & Weight Parameters")
         
         if st.checkbox("Enable Destination City Constraints", key="shp_chk_city", 
-                       help="Assigns regional courier services dynamically based on the customer's delivery city."):
+                       help="Selects couriers based on the customer's delivery city name.\n\nHow to type it:\n- For 1 city: AGRA\n- For multiple cities use commas: AGRA, NEW DELHI, FARIDABAD"):
             ci_in = st.text_input("Enter City Target Name(s):", placeholder="Single: AGRA   |   Multiple: AGRA, NEW DELHI, FARIDABAD", key="shp_inp_city")
             if ci_in: parts.append(smart_format_string(ci_in.upper(), "#shippingPackage.saleOrder.saleOrderItems.iterator().next().shippingAddress.city", use_ignore_case=True))
 
         if st.checkbox("Enable Destination State Constraints", key="shp_chk_state", 
-                       help="Filters logistics and surface shipping routing configurations using state boundaries."):
+                       help="Selects couriers based on the customer's 2-letter delivery state code.\n\nHow to type it:\n- For 1 state: DL\n- For multiple states use commas: DL, HR, UP"):
             st_in = st.text_input("Enter 2-Letter State Code(s):", placeholder="Single: DL   |   Multiple: DL, HR, UP", key="shp_inp_state")
             if st_in: parts.append(smart_format_string(st_in.upper(), "#shippingPackage.saleOrder.saleOrderItems.iterator().next().shippingAddress.stateCode"))
 
         if st.checkbox("Enable Destination Pincode Grid Array Constraints", key="shp_chk_pin", 
-                       help="Ensures precise shipping partner serviceability checks against specific destination pincodes."):
+                       help="Filters courier allocation against specific delivery pincodes. Paste numbers separated by commas, and the app formats them safely.\n\nHow to type it:\n- Example: 110001, 110002, 400001"):
             p_in = st.text_area("Enter Pincode List:", placeholder="Example: 110001, 110002, 400001", key="shp_inp_pin")
             if p_in: parts.append(format_pincode_array(p_in, "#shippingPackage.saleOrder.saleOrderItems.iterator().next().shippingAddress.pincode"))
 
         if st.checkbox("Enable Destination Country Validation", key="shp_chk_country", 
-                       help="Triggers distinct international courier selection criteria based on ISO destination values."):
+                       help="Assigns international vs domestic couriers using country initials.\n\nHow to type it:\n- Example: IN (for India)"):
             co_in = st.text_input("Enter Destination ISO Country Code:", placeholder="Example: IN", max_chars=3, key="shp_inp_country")
             if co_in: parts.append(f"#shippingPackage.saleOrder.saleOrderItems.iterator().next().shippingAddress.countryCode == '{co_in.strip().upper()}'")
 
@@ -172,32 +177,37 @@ elif module == "SHIPPING_FWD":
         st.subheader("⚖️ Physical Logistics Parameters")
         
         if st.checkbox("Enforce Dead Weight Range Scale Slabs", key="shp_chk_s_weight", 
-                       help="Crucial for heavy shipments. Routes packages using logical math operators based on physical dead-weight in grams."):
+                       help="Splits courier allocation based on package scale weight measured in grams.\n\nHow to use it:\n- Min: 0, Max: 5000 will automatically route packages that weigh between 0 grams and 5 kilograms."):
             min_w = st.number_input("Minimum Package Weight Bound (Grams):", min_value=0, value=0, key="shp_inp_min_w")
             max_w = st.number_input("Maximum Package Weight Bound (Grams):", min_value=0, value=5000, key="shp_inp_max_w")
             parts.append(f"#shippingPackage.actualWeight > {min_w} and #shippingPackage.actualWeight < {max_w}")
             
         if st.checkbox("Enforce Transaction Payment Mode Type", key="shp_chk_s_pay", 
-                       help="Filters packages by Cash on Delivery (COD) vs Prepaid to match courier cash-handling support."):
+                       help="Separates courier choices based on how the buyer paid for the order.\n\nHow to select it:\n- Pick COD if the courier needs to collect cash, or PREPAID if the order is already paid."):
             pay_type = st.selectbox("Select Target Payment Classification Mode:", ["COD", "PREPAID"], key="shp_inp_pay")
             parts.append(f"#shippingPackage.saleOrder.paymentMethod.code == '{pay_type}'")
 
+
+# =====================================================================
 # --- INVENTORY CALCULATION LAYOUT ---
+# =====================================================================
 elif module == "INVENTORY_CALC":
     st.subheader("🛠️ Global Synchronizer Formula Constructor")
     
     v_inv = st.checkbox("Incorporate Virtual Allocated Stock Threshold Multipliers", key="calc_virt_inv", 
-                        help="Includes your virtual inventory buffers alongside raw physical quantities during sync calculations.")
+                        help="Include virtual inventory buffers alongside raw physical quantities during sync calculations.")
     
     v_nd = st.checkbox("Incorporate Vendor Catalog Shared Warehouse Stock Pools", key="calc_vend_inv", 
-                       help="Includes drop-shipper or vendor catalog pools in the calculation matrix.")
+                       help="Include shared vendor or drop-shipper stock quantities in the calculation pool.")
     
     unproc = st.checkbox("Incorporate Unprocessed Channel Pipeline Item Counts (Amazon Flex Slabs)", key="calc_unproc_inv", 
-                         help="Factors in open channel orders that haven't dropped into processing status yet (critical for Amazon Flex synchronization).")
+                         help="Count orders that have been placed on marketplaces but haven't dropped into processing status yet (critical for Amazon Flex sync calculations).")
 
 st.write("")
 
+# =====================================================================
 # 4. Central Rule Compiler Pipeline Execution Engine
+# =====================================================================
 if st.button("Compile Target Token Blueprint", type="primary"):
     final_output = ""
     
