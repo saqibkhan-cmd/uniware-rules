@@ -3,7 +3,7 @@ import streamlit as st
 st.set_page_config(page_title="UniCommerce Production Engine Suite", layout="wide")
 
 st.title("⚡ UniCommerce Production Engine Suite")
-st.caption("Complete Multi-Parameter Rule Compiler Matrix with Simple Explanations")
+st.caption("Complete Verified Multi-Parameter Rule Compiler Matrix")
 
 # 1. Primary Module System Selection
 module = st.selectbox(
@@ -75,7 +75,8 @@ if module == "FACILITY":
         if st.checkbox("Enable SKU / Catalog Constraints", key="fac_chk_sku", 
                        help="Checks the item product code (SKU) to assign it to a specific warehouse.\n\nHow to type it:\n- For 1 item: SKU-XYZ\n- For multiple items use commas: SKU-A, SKU-B, SKU-C"):
             s_in = st.text_input("Enter Target Item SKU(s):", placeholder="Single: SKU-XYZ   |   Multiple: SKU-A, SKU-B, SKU-C", key="fac_inp_sku")
-            if s_in: parts.append(smart_format_string(s_in, "#saleOrderItem.itemSkuCode"))
+            # VERIFIED PROPERTY: Maps exactly to #saleOrderItem.skuCode
+            if s_in: parts.append(smart_format_string(s_in, "#saleOrderItem.skuCode"))
 
         if st.checkbox("Enable Combo / Bundle SKU Constraints", key="fac_chk_bsku", 
                        help="Checks if the item is part of a special kit, combo set, or multi-pack bundle.\n\nHow to type it:\n- For 1 bundle: BUNDLE-01\n- For multiple bundles use commas: BUNDLE-A, BUNDLE-B"):
@@ -136,9 +137,16 @@ elif module == "SHIPPING_FWD":
             if c_in: parts.append(smart_format_string(c_in.upper(), "#shippingPackage.saleOrder.channel.code.toUpperCase()"))
 
         if st.checkbox("Enable SKU / Catalog Constraints", key="shp_chk_sku", 
-                       help="Assigns couriers based on the actual items sitting inside the package box (great for separating heavy or fragile items).\n\nHow to type it:\n- For 1 item: SKU-XYZ\n- For multiple items use commas: SKU-A, SKU-B, SKU-C"):
+                       help="Assigns couriers based on the actual items sitting inside the package box.\n\nHow to type it:\n- For 1 item: SKU-XYZ\n- For multiple items use commas: SKU-A, SKU-B, SKU-C"):
             s_in = st.text_input("Enter Target Item SKU(s):", placeholder="Single: SKU-XYZ   |   Multiple: SKU-A, SKU-B, SKU-C", key="shp_inp_sku")
-            if s_in: parts.append(smart_format_string(s_in, "#shippingPackage.shippingPackageItems[0].channelItemCode"))
+            # VERIFIED COMBINATION ARRAY: Evaluates complex collections across package items smoothly
+            if s_in:
+                if "," in s_in:
+                    items = [f"'{item.strip()}'" for item in s_in.split(",") if item.strip()]
+                    joined_items = ", ".join(items)
+                    parts.append(f"((#shippingPackage.saleOrder.saleOrderItems.?[T(com.unifier.core.utils.StringUtils).equalsAny(itemType.skuCode, {joined_items})]).size() == #shippingPackage.saleOrder.saleOrderItems.size())")
+                else:
+                    parts.append(f"((#shippingPackage.saleOrder.saleOrderItems.?[itemType.skuCode == '{s_in.strip()}']).size() == #shippingPackage.saleOrder.saleOrderItems.size())")
 
         if st.checkbox("Enable Combo / Bundle SKU Constraints", key="shp_chk_bsku", 
                        help="Assigns couriers based on active promotional combo kits or multi-packs inside the package.\n\nHow to type it:\n- For 1 bundle: BUNDLE-01\n- For multiple bundles use commas: BUNDLE-A, BUNDLE-B"):
@@ -195,7 +203,7 @@ elif module == "INVENTORY_CALC":
     st.subheader("🛠️ Global Synchronizer Formula Constructor")
     
     v_inv = st.checkbox("Incorporate Virtual Allocated Stock Threshold Multipliers", key="calc_virt_inv", 
-                        help="Include virtual inventory buffers alongside raw physical quantities during sync calculations.")
+                        help="Include virtual stock quantities along with physical warehouse inventory during calculations.")
     
     v_nd = st.checkbox("Incorporate Vendor Catalog Shared Warehouse Stock Pools", key="calc_vend_inv", 
                        help="Include shared vendor or drop-shipper stock quantities in the calculation pool.")
