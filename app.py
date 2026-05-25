@@ -53,20 +53,28 @@ st.write("### 3. Active Parameter Conditions Layer")
 # CORE HELPER METHODS
 # =====================================================================
 
+def _q(item: str) -> str:
+    return f"'{item.strip()}'"
+
+
+def _csv_items(raw_input: str):
+    return [item.strip() for item in raw_input.split(",") if item.strip()]
+
+
 def smart_format_string(raw_input, var_name, use_ignore_case=False):
     """
     Converts user input into Uniware-compatible SpEL expressions.
     - Single value -> direct equality
-    - Multiple comma-separated values -> StringUtils.equalsAny / equalsIgnoreCaseAny
+    - Multiple comma-separated values -> StringUtils.equalsAny / equalsIngoreCaseAny
     """
     if not raw_input or not raw_input.strip():
         return ""
 
-    items = [item.strip() for item in raw_input.split(",") if item.strip()]
-    quoted = [f"'{item}'" for item in items]
+    items = _csv_items(raw_input)
+    quoted = [_q(item) for item in items]
 
     if len(quoted) > 1:
-        func = "equalsIgnoreCaseAny" if use_ignore_case else "equalsAny"
+        func = "equalsIngoreCaseAny" if use_ignore_case else "equalsAny"
         return f"T(com.unifier.core.utils.StringUtils).{func}({var_name}, {', '.join(quoted)})"
 
     if use_ignore_case:
@@ -75,21 +83,18 @@ def smart_format_string(raw_input, var_name, use_ignore_case=False):
     return f"{var_name} == {quoted[0]}"
 
 
-def shipping_channel_or_format(raw_input):
+def channel_format(raw_input, var_name):
     """
-    Builds an explicit OR chain for shipping channels.
-    Useful when channel matching needs to bypass mapping inconsistencies.
+    Builds a compact channel condition that stays close to dump-style rules.
     """
     if not raw_input or not raw_input.strip():
         return ""
 
     items = [item.strip().upper() for item in raw_input.split(",") if item.strip()]
-    var = "#shippingPackage.saleOrder.channel.code"
-
     if len(items) > 1:
-        return "(" + " or ".join([f"{var}.equalsIgnoreCase('{item}')" for item in items]) + ")"
-
-    return f"{var}.equalsIgnoreCase('{items[0]}')"
+        quoted = ", ".join([_q(item) for item in items])
+        return f"T(com.unifier.core.utils.StringUtils).equalsIngoreCaseAny({var_name}, {quoted})"
+    return f"{var_name}.equalsIgnoreCase({_q(items[0])}"
 
 
 def format_pincode_array(raw_input, var_name):
@@ -99,9 +104,24 @@ def format_pincode_array(raw_input, var_name):
     if not raw_input or not raw_input.strip():
         return ""
 
-    items = [f"'{item.strip()}'" for item in raw_input.split(",") if item.strip()]
+    items = [_q(item) for item in _csv_items(raw_input)]
     return f"T(com.unifier.core.utils.StringUtils).equalsAny({var_name}, {{{', '.join(items)}}})"
 
+
+def inventory_method_expression(method_key: str) -> str:
+    method_map = {
+        "PHYSICAL": "#allocationCriteria.hasInventory()",
+        "FULFILLABLE": "#allocationCriteria.hasFulfillableInventory()",
+        "LIVE": "#allocationCriteria.hasLiveInventory()",
+        "LIVE_LOWER": "#allocationCriteria.hasliveInventory()",
+        "SHORT_TERM": "#allocationCriteria.hasShortTermInventory()",
+        "SHORT_TERM_COMPLETE": "#allocationCriteria.hasCompleteShortTermInventory()",
+        "COMPLETE": "#allocationCriteria.hasCompleteInventory()",
+        "MID_TERM_COMPLETE": "#allocationCriteria.hasCompleteMidTermInventory()",
+        "LONG_TERM_COMPLETE": "#allocationCriteria.hasCompleteLongTermInventory()",
+        "LONG_TERM": "#allocationCriteria.hasLongTermInventory()",
+    }
+    return method_map.get(method_key, "")
 
 parts = []
 
@@ -185,14 +205,11 @@ Useful for:
         ):
             region = st.radio(
                 "Select Region Group:",
-                [
-                    "NORTH (DL, HR, PB, RJ, UP, UT)",
-                    "SOUTH (TN, KA, KL, AP, TS)"
-                ],
+                ["NORTH (DL, HR, PB, RJ, UP, UT)", "SOUTH (TN, KA, KL, AP, TS)"],
                 key="fac_region_radio"
             )
             states = "DL, HR, PB, RJ, UP, UT" if "NORTH" in region else "TN, KA, KL, AP, TS"
-            parts.append(smart_format_string(states, "#saleOrderItem.shippingAddress.stateCode"))
+            parts.append(smart_format_string(states, "#saleOrderItem.shippingAddress.stateCode", use_ignore_case=True))
 
         if st.checkbox(
             "Enable Specific Order Tag Constraints",
@@ -220,23 +237,36 @@ Rule returns TRUE when the order tag matches the configured value.
         st.subheader("📈 Warehouse Stock Status Triggers")
 
         if st.checkbox(
-            "Enforce Direct Active Warehouse Inventory Match",
-            key="fac_chk_f_inv",
+            "Enable Inventory Method Constraints",
+            key="fac_chk_inv_method",
             help="""
-Rule evaluates TRUE only when the warehouse currently has physical inventory available.
-"""
-        ):
-            parts.append("#allocationCriteria.hasInventory()")
+Pick the stock-status rule used by the allocation dump.
 
-        if st.checkbox(
-            "Enforce Complete Short-Term Catalog Stock Verification",
-            key="fac_chk_f_st_inv",
-            help="""
-Checks verified short-term inventory availability before warehouse assignment.
-Useful for future inward / replenishment-aware routing.
+Examples:
+- Physical stock only
+- Short-term stock
+- Complete short-term stock
+- Fulfillable / live / complete inventory
 """
         ):
-            parts.append("#allocationCriteria.hasCompleteShortTermInventory()")
+            inv_method = st.selectbox(
+                "Select Inventory Method:",
+                [
+                    ("PHYSICAL", "Physical Warehouse Inventory"),
+                    ("FULFILLABLE", "Fulfillable Inventory"),
+                    ("LIVE", "Live Inventory"),
+                    ("LIVE_LOWER", "Live Inventory (Lowercase Variant)"),
+                    ("SHORT_TERM", "Short-Term Inventory"),
+                    ("SHORT_TERM_COMPLETE", "Complete Short-Term Inventory"),
+                    ("COMPLETE", "Complete Inventory"),
+                    ("MID_TERM_COMPLETE", "Complete Mid-Term Inventory"),
+                    ("LONG_TERM_COMPLETE", "Complete Long-Term Inventory"),
+                    ("LONG_TERM", "Long-Term Inventory"),
+                ],
+                format_func=lambda x: x[1],
+                key="fac_inv_method"
+            )
+            parts.append(inventory_method_expression(inv_method[0]))
 
     with col2:
         st.subheader("🗺️ Destination & Shipment Rules")
@@ -258,13 +288,7 @@ Examples:
                 key="fac_inp_city"
             )
             if ci_in:
-                parts.append(
-                    smart_format_string(
-                        ci_in.upper(),
-                        "#saleOrderItem.shippingAddress.city",
-                        use_ignore_case=True
-                    )
-                )
+                parts.append(smart_format_string(ci_in.upper(), "#saleOrderItem.shippingAddress.city", use_ignore_case=True))
 
         if st.checkbox(
             "Enable Destination State Constraints",
@@ -283,7 +307,7 @@ Examples:
                 key="fac_inp_state"
             )
             if st_in:
-                parts.append(smart_format_string(st_in.upper(), "#saleOrderItem.shippingAddress.stateCode"))
+                parts.append(smart_format_string(st_in.upper(), "#saleOrderItem.shippingAddress.stateCode", use_ignore_case=True))
 
         if st.checkbox(
             "Enable Destination Pincode Grid Array Constraints",
@@ -303,12 +327,7 @@ The system automatically formats the array into Uniware-compatible syntax.
                 key="fac_inp_pin"
             )
             if p_in:
-                parts.append(
-                    format_pincode_array(
-                        p_in,
-                        "#saleOrder.saleOrderItems.iterator().next().shippingAddress.pincode"
-                    )
-                )
+                parts.append(format_pincode_array(p_in, "#saleOrder.saleOrderItems.iterator().next().shippingAddress.pincode"))
 
         if st.checkbox(
             "Enable Destination Country Validation",
@@ -339,6 +358,19 @@ elif module == "SHIPPING_FWD":
     with col1:
         st.subheader("📦 Package System Identifiers")
 
+        reverse_mode = st.checkbox(
+            "Use Reverse Pickup Channel Context",
+            key="shp_chk_reverse",
+            help="""
+Switches the channel source to reverse pickup rules.
+
+Use this when the dump uses:
+#reversePickup.saleOrder.channel.code
+"""
+        )
+
+        channel_var = "#reversePickup.saleOrder.channel.code" if reverse_mode else "#shippingPackage.saleOrder.channel.code"
+
         if st.checkbox(
             "Enable Channel / Store Constraints",
             key="shp_chk_chan",
@@ -356,7 +388,7 @@ Examples:
                 key="shp_inp_chan"
             )
             if c_in:
-                parts.append(shipping_channel_or_format(c_in))
+                parts.append(channel_format(c_in, channel_var))
 
         if st.checkbox(
             "Enable SKU / Catalog Constraints",
@@ -375,15 +407,15 @@ Examples:
                 key="shp_inp_sku"
             )
             if s_in:
-                if "," in s_in:
-                    items = [f"'{item.strip()}'" for item in s_in.split(",") if item.strip()]
-                    joined_items = ", ".join(items)
+                sku_items = [f"'{i.strip()}'" for i in s_in.split(",") if i.strip()]
+                if len(sku_items) > 1:
+                    joined_items = ", ".join(sku_items)
                     parts.append(
                         f"((#shippingPackage.saleOrder.saleOrderItems.?[T(com.unifier.core.utils.StringUtils).equalsAny(itemType.skuCode, {joined_items})]).size() == #shippingPackage.saleOrder.saleOrderItems.size())"
                     )
-                else:
+                elif sku_items:
                     parts.append(
-                        f"((#shippingPackage.saleOrder.saleOrderItems.?[itemType.skuCode == '{s_in.strip()}']).size() == #shippingPackage.saleOrder.saleOrderItems.size())"
+                        f"((#shippingPackage.saleOrder.saleOrderItems.?[itemType.skuCode == {sku_items[0]}]).size() == #shippingPackage.saleOrder.saleOrderItems.size())"
                     )
 
         if st.checkbox(
@@ -404,6 +436,27 @@ Examples:
             )
             if b_in:
                 parts.append(smart_format_string(b_in, "#shippingPackage.shippingPackageItems[0].bundleSkuCode"))
+
+        if st.checkbox(
+            "Enable Shipping Package Type Constraints",
+            key="shp_chk_pkg_type",
+            help="""
+Matches the package type code used by the allocation engine.
+
+This is not the shipment ID.
+Use it when the dump routes by:
+- package type
+- box type
+- parcel type
+"""
+        ):
+            pkg_type = st.text_input(
+                "Enter Shipping Package Type Code(s):",
+                placeholder="Single: A3   |   Multiple: A3, A15, T-RJ",
+                key="shp_inp_pkg_type"
+            )
+            if pkg_type:
+                parts.append(smart_format_string(pkg_type, "#shippingPackage.shippingPackageType.code", use_ignore_case=True))
 
         if st.checkbox(
             "Enable Specific Order Tag Constraints",
@@ -445,13 +498,7 @@ Examples:
                 key="shp_inp_city"
             )
             if ci_in:
-                parts.append(
-                    smart_format_string(
-                        ci_in.upper(),
-                        "#shippingPackage.saleOrder.saleOrderItems.iterator().next().shippingAddress.city",
-                        use_ignore_case=True
-                    )
-                )
+                parts.append(smart_format_string(ci_in.upper(), "#shippingPackage.saleOrder.saleOrderItems.iterator().next().shippingAddress.city", use_ignore_case=True))
 
         if st.checkbox(
             "Enable Destination State Constraints",
@@ -470,12 +517,7 @@ Examples:
                 key="shp_inp_state"
             )
             if st_in:
-                parts.append(
-                    smart_format_string(
-                        st_in.upper(),
-                        "#shippingPackage.saleOrder.saleOrderItems.iterator().next().shippingAddress.stateCode"
-                    )
-                )
+                parts.append(smart_format_string(st_in.upper(), "#shippingPackage.saleOrder.saleOrderItems.iterator().next().shippingAddress.stateCode", use_ignore_case=True))
 
         if st.checkbox(
             "Enable Destination Pincode Grid Array Constraints",
@@ -495,12 +537,7 @@ The system automatically formats the array into Uniware-compatible syntax.
                 key="shp_inp_pin"
             )
             if p_in:
-                parts.append(
-                    format_pincode_array(
-                        p_in,
-                        "#shippingPackage.saleOrder.saleOrderItems.iterator().next().shippingAddress.pincode"
-                    )
-                )
+                parts.append(format_pincode_array(p_in, "#shippingPackage.saleOrder.saleOrderItems.iterator().next().shippingAddress.pincode"))
 
         if st.checkbox(
             "Enable Destination Country Validation",
@@ -520,9 +557,7 @@ Examples:
                 key="shp_inp_country"
             )
             if co_in:
-                parts.append(
-                    f"#shippingPackage.saleOrder.saleOrderItems.iterator().next().shippingAddress.countryCode == '{co_in.strip().upper()}'"
-                )
+                parts.append(f"#shippingPackage.saleOrder.saleOrderItems.iterator().next().shippingAddress.countryCode == '{co_in.strip().upper()}'")
 
         st.markdown("---")
         st.subheader("⚖️ Physical Logistics Parameters")
