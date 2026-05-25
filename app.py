@@ -4,16 +4,15 @@ import streamlit as st
 # SYSTEM CONFIGURATION & UI INITIALIZATION
 # =====================================================================
 st.set_page_config(
-    page_title="UniCommerce Master Production Engine", 
-    layout="wide", 
+    page_title="UniCommerce Master Production Engine",
+    layout="wide",
     initial_sidebar_state="expanded"
 )
 
 st.title("⚡ UniCommerce Master Production Engine")
-st.caption("Version 6.0.4 | Final Verified Production Suite | Full Logic Integration")
+st.caption("Version 7.0.0 | Final Unabridged Production Build | Full Logic Matrix")
 
 # 1. Primary Module System Selection
-# This defines the SpEL context (Facility vs Shipping vs Inventory)
 module = st.selectbox(
     "1. Select Operational Target Module",
     ["FACILITY", "SHIPPING_FWD", "INVENTORY_CALC"],
@@ -38,8 +37,8 @@ if module == "INVENTORY_CALC":
     )
 else:
     sub_type = st.selectbox(
-        "2. Choose Rule Evaluation Type", 
-        ["STANDARD_COMBINATIONS"], 
+        "2. Choose Rule Evaluation Type",
+        ["STANDARD_COMBINATIONS"],
         format_func=lambda x: "Configurable Multi-Parameter Combination Matrix"
     )
 
@@ -52,7 +51,8 @@ st.write("### 3. Active Parameter Conditions Layer")
 
 def smart_format_string(raw_input, var_name, use_ignore_case=False):
     """Parses user input into SpEL StringUtils functions or direct equality."""
-    if not raw_input.strip(): return ""
+    if not raw_input.strip():
+        return ""
     items = [f"'{i.strip()}'" for i in raw_input.split(",") if i.strip()]
     if len(items) > 1:
         func = "equalsIgnoreCaseAny" if use_ignore_case else "equalsAny"
@@ -61,7 +61,8 @@ def smart_format_string(raw_input, var_name, use_ignore_case=False):
 
 def shipping_channel_or_format(raw_input):
     """Builds an explicit OR chain for shipping channels to bypass mapping bugs."""
-    if not raw_input.strip(): return ""
+    if not raw_input.strip():
+        return ""
     items = [f"'{i.strip().upper()}'" for i in raw_input.split(",") if i.strip()]
     var = "#shippingPackage.saleOrder.channel.code"
     if len(items) > 1:
@@ -71,7 +72,8 @@ def shipping_channel_or_format(raw_input):
 
 def format_pincode_array(raw_input, var_name):
     """Formats pincodes into the curly-brace array required by Uniware lookups."""
-    if not raw_input.strip(): return ""
+    if not raw_input.strip():
+        return ""
     items = [f"'{i.strip()}'" for i in raw_input.split(",") if i.strip()]
     return f"T(com.unifier.core.utils.StringUtils).equalsAny({var_name}, {{{', '.join(items)}}})"
 
@@ -84,43 +86,111 @@ if module == "FACILITY":
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("📦 Core System Identifiers")
-        
-        if st.checkbox("Enable Channel / Store Constraints", key="fac_chk_chan", 
-                       help="Checks the order source code. \nExample: AMAZON_IN, FLIPKART"):
-            c_in = st.text_input("Enter Channel Code(s):", placeholder="AMAZON_IN, SHOPIFY, MEESHO", key="fac_inp_chan")
-            if c_in: parts.append(smart_format_string(c_in.upper(), "#saleOrder.channel.code"))
 
-        if st.checkbox("Enable SKU / Catalog Constraints", key="fac_chk_sku"):
-            s_in = st.text_input("Enter Target Item SKU(s):", placeholder="SKU-1, SKU-2", key="fac_inp_sku")
-            if s_in: parts.append(smart_format_string(s_in, "#saleOrderItem.skuCode"))
+        if st.checkbox(
+            "Enable Channel / Store Constraints",
+            key="f_chan",
+            help="Checks order source. Format: AMAZON_IN, SHOPIFY"
+        ):
+            c_in = st.text_input(
+                "Channel Code(s):",
+                placeholder="AMAZON_IN, FLIPKART, MEESHO",
+                key="f_c_in"
+            )
+            if c_in:
+                parts.append(smart_format_string(c_in.upper(), "#saleOrder.channel.code"))
 
-        if st.checkbox("Enable Specific Order Tag Constraints", key="fac_chk_tag", 
-                       help="TIP: Matches the Order JSON custom field value. If the JSON value matches this text, it returns true. SpEL logic evaluates as (condition ? true : false)."):
-            t_in = st.text_input("Enter Tag Target String:", placeholder="e.g. VIP_ORDER", key="fac_inp_tag")
-            if t_in: parts.append(f"T(com.unifier.core.utils.StringUtils).equalsAny(#saleOrder.tag, '{t_in.strip()}')")
+        if st.checkbox("Enable SKU / Catalog Constraints", key="f_sku"):
+            s_in = st.text_input(
+                "Target Item SKU(s):",
+                placeholder="SKU-A, SKU-B",
+                key="f_s_in"
+            )
+            if s_in:
+                parts.append(smart_format_string(s_in, "#saleOrderItem.skuCode"))
+
+        if st.checkbox("Enable Combo / Bundle SKU Constraints", key="f_bsku"):
+            b_in = st.text_input(
+                "Enter Bundle SKU(s):",
+                placeholder="BUNDLE-01",
+                key="f_b_in"
+            )
+            if b_in:
+                parts.append(smart_format_string(b_in, "#saleOrderItem.bundleSkuCode"))
+
+        if st.checkbox("Enable Regional State Groups", key="f_reg"):
+            region = st.radio(
+                "Select Zone:",
+                ["NORTH (DL, HR, PB, RJ, UP, UT)", "SOUTH (TN, KA, KL, AP, TS)"]
+            )
+            states = "DL, HR, PB, RJ, UP, UT" if "NORTH" in region else "TN, KA, KL, AP, TS"
+            parts.append(smart_format_string(states, "#saleOrderItem.shippingAddress.stateCode"))
+
+        if st.checkbox(
+            "Enable Specific Order Tag Constraints",
+            key="f_tag",
+            help="TIP (?): This matches the Order JSON custom field. If JSON value = Rule value, it returns true. SpEL logic: (condition ? true : false)."
+        ):
+            t_in = st.text_input(
+                "Tag Target String:",
+                placeholder="e.g. VIP_ORDER",
+                key="f_t_in"
+            )
+            if t_in:
+                parts.append(f"T(com.unifier.core.utils.StringUtils).equalsAny(#saleOrder.tag, '{t_in.strip()}')")
 
         st.markdown("---")
-        st.subheader("📈 Inventory Availability Triggers")
-        if st.checkbox("Enforce Direct Warehouse Stock Match", key="fac_chk_f_inv"):
+        st.subheader("📈 Inventory Triggers")
+
+        if st.checkbox("Has Physical Stock", key="f_inv"):
             parts.append("#allocationCriteria.hasInventory()")
-            
-        if st.checkbox("Enforce Short-Term Inventory Verification", key="fac_chk_f_st_inv"):
+
+        if st.checkbox("Short-Term Verified Stock", key="f_st_inv"):
             parts.append("#allocationCriteria.hasCompleteShortTermInventory()")
 
     with col2:
         st.subheader("🗺️ Destination Logistics")
-        if st.checkbox("Enable City Constraints", key="fac_chk_city"):
-            ci_in = st.text_input("Target City Name(s):", placeholder="DELHI, MUMBAI", key="fac_inp_city")
-            if ci_in: parts.append(smart_format_string(ci_in.upper(), "#saleOrderItem.shippingAddress.city", True))
 
-        if st.checkbox("Enable State Constraints", key="fac_chk_state"):
-            st_in = st.text_input("Target State Code(s):", placeholder="DL, HR, MH", key="fac_inp_state")
-            if st_in: parts.append(smart_format_string(st_in.upper(), "#saleOrderItem.shippingAddress.stateCode"))
+        if st.checkbox("City Constraints", key="f_city"):
+            ci_in = st.text_input(
+                "Target City Name(s):",
+                placeholder="AGRA, DELHI",
+                key="f_ci_in"
+            )
+            if ci_in:
+                parts.append(smart_format_string(ci_in.upper(), "#saleOrderItem.shippingAddress.city", True))
 
-        if st.checkbox("Enable Pincode Grid Array", key="fac_chk_pin", 
-                       help="Converts list into the high-performance curly brace array format."):
-            p_in = st.text_area("Pincode List:", placeholder="110001, 400001", key="fac_inp_pin")
-            if p_in: parts.append(format_pincode_array(p_in, "#saleOrder.saleOrderItems.iterator().next().shippingAddress.pincode"))
+        if st.checkbox("State Constraints (Direct)", key="f_state"):
+            st_in = st.text_input(
+                "2-Letter State Code(s):",
+                placeholder="DL, MH, KA",
+                key="f_st_in"
+            )
+            if st_in:
+                parts.append(smart_format_string(st_in.upper(), "#saleOrderItem.shippingAddress.stateCode"))
+
+        if st.checkbox("Pincode Grid Array", key="f_pin", help="Built-in array formatting for serviceability."):
+            p_in = st.text_area(
+                "Pincode List:",
+                placeholder="110001, 400001",
+                key="f_p_in"
+            )
+            if p_in:
+                parts.append(
+                    format_pincode_array(
+                        p_in,
+                        "#saleOrder.saleOrderItems.iterator().next().shippingAddress.pincode"
+                    )
+                )
+
+        if st.checkbox("Country Validation", key="f_country"):
+            co_in = st.text_input(
+                "ISO Country Code:",
+                placeholder="IN",
+                key="f_co_in"
+            )
+            if co_in:
+                parts.append(f"#saleOrderItem.shippingAddress.countryCode == '{co_in.strip().upper()}'")
 
 # =====================================================================
 # --- MODULE B: SHIPPING ALLOCATION LAYOUT ---
@@ -129,32 +199,42 @@ elif module == "SHIPPING_FWD":
     col1, col2 = st.columns(2)
     with col1:
         st.subheader("📦 Package-Level Parameters")
-        
-        if st.checkbox("Enable Channel OR Logic", key="shp_chk_chan"):
-            c_in = st.text_input("Channel Code(s):", placeholder="AMAZON_IN, FLIPKART", key="shp_inp_chan")
-            if c_in: parts.append(shipping_channel_or_format(c_in))
 
-        if st.checkbox("Enable Strict SKU Match (Full Package)", key="shp_chk_sku", 
-                       help="Assigns courier only if EVERY item in the package is in this list."):
-            s_in = st.text_input("Target SKU(s):", key="shp_inp_sku")
+        if st.checkbox("Channel OR Logic", key="s_chan"):
+            c_in = st.text_input(
+                "Channel Code(s):",
+                placeholder="AMAZON_IN, FLIPKART",
+                key="s_c_in"
+            )
+            if c_in:
+                parts.append(shipping_channel_or_format(c_in))
+
+        if st.checkbox("Strict SKU Match (Whole Box)", key="s_sku", help="Only triggers if ALL items in package are in this list."):
+            s_in = st.text_input(
+                "Target SKU(s):",
+                key="s_s_in"
+            )
             if s_in:
                 sl = [f"'{i.strip()}'" for i in s_in.split(",") if i.strip()]
-                parts.append(f"((#shippingPackage.saleOrder.saleOrderItems.?[T(com.unifier.core.utils.StringUtils).equalsAny(itemType.skuCode, {', '.join(sl)})]).size() == #shippingPackage.saleOrder.saleOrderItems.size())")
+                parts.append(
+                    f"((#shippingPackage.saleOrder.saleOrderItems.?[T(com.unifier.core.utils.StringUtils).equalsAny(itemType.skuCode, {', '.join(sl)})]).size() == #shippingPackage.saleOrder.saleOrderItems.size())"
+                )
 
-        if st.checkbox("Enable Tag Constraints", key="shp_chk_tag", 
-                       help="TIP: Validates package-level metadata. SpEL logic: (JSON_value ? true : false)."):
-            t_in = st.text_input("Tag Value:", key="shp_inp_tag")
-            if t_in: parts.append(f"T(com.unifier.core.utils.StringUtils).equalsAny(#shippingPackage.saleOrder.tag, '{t_in.strip()}')")
+        if st.checkbox("Package Tag Constraints", key="s_tag", help="TIP (?): Validates custom field in shipping package. SpEL logic: (JSON_value ? true : false)."):
+            t_in = st.text_input("Tag Value:", key="s_t_in")
+            if t_in:
+                parts.append(f"T(com.unifier.core.utils.StringUtils).equalsAny(#shippingPackage.saleOrder.tag, '{t_in.strip()}')")
 
     with col2:
-        st.subheader("⚖️ Logistics & Weight Slabs")
-        if st.checkbox("Weight Range (Grams)", key="shp_chk_s_weight"):
-            min_w = st.number_input("Min Weight:", value=0, key="shp_min")
-            max_w = st.number_input("Max Weight:", value=5000, key="shp_max")
+        st.subheader("⚖️ Logistics & Weights")
+
+        if st.checkbox("Weight Range (Grams)", key="s_weight"):
+            min_w = st.number_input("Min:", value=0)
+            max_w = st.number_input("Max:", value=5000)
             parts.append(f"#shippingPackage.actualWeight > {min_w} and #shippingPackage.actualWeight < {max_w}")
-            
-        if st.checkbox("Payment Mode Constraints", key="shp_chk_s_pay"):
-            pm = st.selectbox("Select Mode:", ["COD", "PREPAID"], key="shp_inp_pay")
+
+        if st.checkbox("Payment Mode", key="s_pay"):
+            pm = st.selectbox("Select Mode:", ["COD", "PREPAID"])
             parts.append(f"#shippingPackage.saleOrder.paymentMethod.code == '{pm}'")
 
 # =====================================================================
@@ -162,40 +242,50 @@ elif module == "SHIPPING_FWD":
 # =====================================================================
 elif module == "INVENTORY_CALC":
     st.subheader("🛠️ Global Formula Matrix")
-    v_inv = st.checkbox("Incorporate Virtual Inventory", key="c_v")
-    v_nd = st.checkbox("Incorporate Vendor Shared Stock", key="c_vend")
-    unproc = st.checkbox("Incorporate Amazon Flex (Unprocessed Pipeline)", key="c_u", 
-                         help="Adds #unprocessedOrderInventory to the calculation pool.")
+    v_inv = st.checkbox("Include Virtual Inventory", key="i_v")
+    v_nd = st.checkbox("Include Vendor Shared Stock", key="i_vend")
+    unproc = st.checkbox(
+        "Include Amazon Flex (Unprocessed Pipeline)",
+        key="i_u",
+        help="Critical for Amazon Flex sync accuracy."
+    )
 
 st.write("---")
 
 # =====================================================================
-# 4. COMPILER & FINAL OUTPUT GENERATOR
+# 4. COMPILER & FINAL OUTPUT
 # =====================================================================
 if st.button("Compile Target Token Blueprint", type="primary"):
     final_output = ""
-    
+
     if module in ["FACILITY", "SHIPPING_FWD"]:
         if not parts:
-            st.error("Please select at least one condition to generate the rule.")
+            st.error("Please select conditions.")
         else:
             final_output = "#{\n  " + " and \n  ".join(parts) + "\n}"
-            
+
     elif module == "INVENTORY_CALC":
         inv = "#inventorySnapshot.inventory"
-        if v_inv: inv += " + #inventorySnapshot.virtualInventory"
-        if v_nd:  inv += " + #inventorySnapshot.vendorInventory"
-        
+        if v_inv:
+            inv += " + #inventorySnapshot.virtualInventory"
+        if v_nd:
+            inv += " + #inventorySnapshot.vendorInventory"
+
         deduct = "- #inventorySnapshot.openSale - #pendency - (#failedOrderInventory?:0) - #inventoryBlockedOnOtherChannels - #inventorySnapshot.pendingInventoryAssessment"
-        if unproc: deduct += " + #unprocessedOrderInventory"
-        
+        if unproc:
+            deduct += " + #unprocessedOrderInventory"
+
         core = f"{inv} {deduct}"
-        if sub_type == "DEFAULT": final_output = f"#{{{core}}}"
-        elif sub_type == "BUFFER_3": final_output = f"#{{({core})<=3?0:({core})}}"
-        elif sub_type == "BUFFER_1": final_output = f"#{{({core})<=1?0:({core})}}"
-        elif sub_type == "ZERO_SYNC": final_output = f"#{{({core})*0}}"
+
+        if sub_type == "DEFAULT":
+            final_output = f"#{{{core}}}"
+        elif sub_type == "BUFFER_3":
+            final_output = f"#{{({core})<=3?0:({core})}}"
+        elif sub_type == "BUFFER_1":
+            final_output = f"#{{({core})<=1?0:({core})}}"
+        elif sub_type == "ZERO_SYNC":
+            final_output = f"#{{({core})*0}}"
 
     if final_output:
         st.subheader("📋 Compiled System Token String")
-        st.info("Copy the block below and paste directly into the Uniware Rule field.")
         st.code(final_output, language="java")
