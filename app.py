@@ -11,7 +11,7 @@ st.set_page_config(
 )
 
 st.title("⚡ UniCommerce Master Production Engine Suite")
-st.caption("Version 7.0.0 | Complete Verified Multi-Parameter Rule Compiler Matrix")
+st.caption("Version 7.1.0 | Complete Verified Multi-Parameter Rule Compiler Matrix")
 
 # =====================================================================
 # PRIMARY MODULE SELECTION
@@ -63,13 +63,6 @@ def quoted_csv(raw_input):
     return [f"'{x.strip()}'" for x in raw_input.split(",") if x.strip()]
 
 def smart_format_string(raw_input, var_name, use_ignore_case=False):
-    """
-    Single value:
-        #var == 'X'
-
-    Multiple values:
-        equalsAny / equalsIgnoreCaseAny
-    """
 
     if not raw_input.strip():
         return ""
@@ -86,10 +79,6 @@ def smart_format_string(raw_input, var_name, use_ignore_case=False):
     return f"{var_name} == {items[0]}"
 
 def shipping_channel_or_format(raw_input, channel_var):
-    """
-    Explicit OR chain for shipping channels.
-    Matches dump patterns more safely.
-    """
 
     if not raw_input.strip():
         return ""
@@ -105,9 +94,6 @@ def shipping_channel_or_format(raw_input, channel_var):
     return f"{channel_var}.equalsIgnoreCase('{items[0].upper()}')"
 
 def format_pincode_array(raw_input, var_name):
-    """
-    Uniware compatible pincode array formatting.
-    """
 
     if not raw_input.strip():
         return ""
@@ -470,30 +456,47 @@ elif module == "SHIPPING_FWD":
 
     col1, col2 = st.columns(2)
 
+    # =================================================================
+    # CONTEXT SELECTOR
+    # =================================================================
+
+    rule_context = st.selectbox(
+        "Select Shipment Evaluation Context",
+        ["FORWARD", "REVERSE"],
+        help="""
+Choose which allocation engine context this rule should target.
+
+FORWARD:
+Standard shipping package allocation rules.
+
+REVERSE:
+Reverse pickup allocation rules.
+"""
+    )
+
+    is_reverse = rule_context == "REVERSE"
+
+    channel_var = (
+        "#reversePickup.saleOrder.channel.code"
+        if is_reverse
+        else "#shippingPackage.saleOrder.channel.code"
+    )
+
+    weight_var = (
+        "#reversePickup.actualWeight"
+        if is_reverse
+        else "#shippingPackage.actualWeight"
+    )
+
+    payment_var = (
+        "#reversePickup.saleOrder.paymentMethod.code"
+        if is_reverse
+        else "#shippingPackage.saleOrder.paymentMethod.code"
+    )
+
     with col1:
 
         st.subheader("📦 Package System Identifiers")
-
-        # ==============================================================
-        # REVERSE PICKUP
-        # ==============================================================
-
-        reverse_mode = st.checkbox(
-            "Use Reverse Pickup Channel Context",
-            key="shp_chk_reverse",
-            help="""
-Enable this when the allocation dump uses reverse pickup channel references.
-
-Example:
-#reversePickup.saleOrder.channel.code
-"""
-        )
-
-        channel_var = (
-            "#reversePickup.saleOrder.channel.code"
-            if reverse_mode
-            else "#shippingPackage.saleOrder.channel.code"
-        )
 
         # ==============================================================
         # CHANNEL
@@ -592,35 +595,42 @@ Examples:
                 )
 
         # ==============================================================
-        # SHIPPING PACKAGE TYPE
+        # PACKAGE TYPE
         # ==============================================================
 
-        if st.checkbox(
-            "Enable Shipping Package Type Constraints",
-            key="shp_chk_pkg_type",
-            help="""
+        if not is_reverse:
+
+            if st.checkbox(
+                "Enable Shipping Package Type Constraints",
+                key="shp_chk_pkg_type",
+                help="""
 Matches shipping package / parcel type codes.
 
 Examples:
 - Single Type: A3
 - Multiple Types: A3, T-RJ, BX15
 """
-        ):
+            ):
 
-            pkg_type = st.text_input(
-                "Enter Shipping Package Type Code(s):",
-                placeholder="Single: A3   |   Multiple: A3, T-RJ, BX15",
-                key="shp_inp_pkg_type"
-            )
-
-            if pkg_type:
-                parts.append(
-                    smart_format_string(
-                        pkg_type,
-                        "#shippingPackage.shippingPackageType.code",
-                        use_ignore_case=True
-                    )
+                pkg_type = st.text_input(
+                    "Enter Shipping Package Type Code(s):",
+                    placeholder="Single: A3   |   Multiple: A3, T-RJ, BX15",
+                    key="shp_inp_pkg_type"
                 )
+
+                if pkg_type:
+                    parts.append(
+                        smart_format_string(
+                            pkg_type,
+                            "#shippingPackage.shippingPackageType.code",
+                            use_ignore_case=True
+                        )
+                    )
+
+        else:
+            st.info(
+                "Shipping Package Type Constraints are unavailable in Reverse Pickup mode."
+            )
 
         # ==============================================================
         # TAG
@@ -812,7 +822,7 @@ Example:
             )
 
             parts.append(
-                f"#shippingPackage.actualWeight > {min_w} and #shippingPackage.actualWeight < {max_w}"
+                f"{weight_var} > {min_w} and {weight_var} < {max_w}"
             )
 
         # ==============================================================
@@ -838,7 +848,7 @@ Options:
             )
 
             parts.append(
-                f"#shippingPackage.saleOrder.paymentMethod.code == '{pay_type}'"
+                f"{payment_var} == '{pay_type}'"
             )
 
 # =====================================================================
