@@ -53,28 +53,26 @@ st.write("### 3. Active Parameter Conditions Layer")
 # CORE HELPER METHODS
 # =====================================================================
 
-def _q(item: str) -> str:
-    return f"'{item.strip()}'"
-
-
-def _csv_items(raw_input: str):
+def _csv_items(raw_input):
     return [item.strip() for item in raw_input.split(",") if item.strip()]
 
+def _quote(item):
+    return f"'{item.strip()}'"
 
 def smart_format_string(raw_input, var_name, use_ignore_case=False):
     """
     Converts user input into Uniware-compatible SpEL expressions.
     - Single value -> direct equality
-    - Multiple comma-separated values -> StringUtils.equalsAny / equalsIngoreCaseAny
+    - Multiple comma-separated values -> StringUtils.equalsAny / equalsIgnoreCaseAny
     """
     if not raw_input or not raw_input.strip():
         return ""
 
     items = _csv_items(raw_input)
-    quoted = [_q(item) for item in items]
+    quoted = [_quote(item) for item in items]
 
     if len(quoted) > 1:
-        func = "equalsIngoreCaseAny" if use_ignore_case else "equalsAny"
+        func = "equalsIgnoreCaseAny" if use_ignore_case else "equalsAny"
         return f"T(com.unifier.core.utils.StringUtils).{func}({var_name}, {', '.join(quoted)})"
 
     if use_ignore_case:
@@ -82,20 +80,21 @@ def smart_format_string(raw_input, var_name, use_ignore_case=False):
 
     return f"{var_name} == {quoted[0]}"
 
-
-def channel_format(raw_input, var_name):
+def shipping_channel_or_format(raw_input):
     """
-    Builds a compact channel condition that stays close to dump-style rules.
+    Builds an explicit OR chain for shipping channels.
     """
     if not raw_input or not raw_input.strip():
         return ""
 
     items = [item.strip().upper() for item in raw_input.split(",") if item.strip()]
-    if len(items) > 1:
-        quoted = ", ".join([_q(item) for item in items])
-        return f"T(com.unifier.core.utils.StringUtils).equalsIngoreCaseAny({var_name}, {quoted})"
-    return f"{var_name}.equalsIgnoreCase({_q(items[0])}"
+    var = "#shippingPackage.saleOrder.channel.code"
 
+    if len(items) > 1:
+        or_chain = " or ".join([f"{var}.equalsIgnoreCase('{item}')" for item in items])
+        return f"({or_chain})"
+
+    return f"{var}.equalsIgnoreCase('{items[0]}')"
 
 def format_pincode_array(raw_input, var_name):
     """
@@ -104,11 +103,10 @@ def format_pincode_array(raw_input, var_name):
     if not raw_input or not raw_input.strip():
         return ""
 
-    items = [_q(item) for item in _csv_items(raw_input)]
+    items = [_quote(item) for item in _csv_items(raw_input)]
     return f"T(com.unifier.core.utils.StringUtils).equalsAny({var_name}, {{{', '.join(items)}}})"
 
-
-def inventory_method_expression(method_key: str) -> str:
+def inventory_method_expression(method_key):
     method_map = {
         "PHYSICAL": "#allocationCriteria.hasInventory()",
         "FULFILLABLE": "#allocationCriteria.hasFulfillableInventory()",
@@ -192,37 +190,10 @@ Examples:
                 parts.append(smart_format_string(b_in, "#saleOrderItem.bundleSkuCode"))
 
         if st.checkbox(
-            "Enable Regional State Group Routing",
-            key="fac_chk_region",
-            help="""
-Creates predefined regional warehouse routing logic.
-
-Useful for:
-- North vs South warehouse separation
-- Faster regional fulfillment
-- Zonal allocation policies
-"""
-        ):
-            region = st.radio(
-                "Select Region Group:",
-                ["NORTH (DL, HR, PB, RJ, UP, UT)", "SOUTH (TN, KA, KL, AP, TS)"],
-                key="fac_region_radio"
-            )
-            states = "DL, HR, PB, RJ, UP, UT" if "NORTH" in region else "TN, KA, KL, AP, TS"
-            parts.append(smart_format_string(states, "#saleOrderItem.shippingAddress.stateCode", use_ignore_case=True))
-
-        if st.checkbox(
             "Enable Specific Order Tag Constraints",
             key="fac_chk_tag",
             help="""
-Matches custom order tags added through integrations, workflows, or manual tagging.
-
-Examples:
-- HIGH_VALUE
-- VIP_ORDER
-- B2B_PRIORITY
-
-Rule returns TRUE when the order tag matches the configured value.
+Tip: For this to work, the tag in the order JSON, the custom field name, and the value entered in this rule must match exactly.
 """
         ):
             t_in = st.text_input(
@@ -327,7 +298,12 @@ The system automatically formats the array into Uniware-compatible syntax.
                 key="fac_inp_pin"
             )
             if p_in:
-                parts.append(format_pincode_array(p_in, "#saleOrder.saleOrderItems.iterator().next().shippingAddress.pincode"))
+                parts.append(
+                    format_pincode_array(
+                        p_in,
+                        "#saleOrder.saleOrderItems.iterator().next().shippingAddress.pincode"
+                    )
+                )
 
         if st.checkbox(
             "Enable Destination Country Validation",
@@ -388,7 +364,7 @@ Examples:
                 key="shp_inp_chan"
             )
             if c_in:
-                parts.append(channel_format(c_in, channel_var))
+                parts.append(shipping_channel_or_format(c_in) if not reverse_mode else smart_format_string(c_in.upper(), channel_var))
 
         if st.checkbox(
             "Enable SKU / Catalog Constraints",
@@ -462,12 +438,7 @@ Use it when the dump routes by:
             "Enable Specific Order Tag Constraints",
             key="shp_chk_tag",
             help="""
-Routes packages using specific couriers based on custom labels added to the order.
-
-Examples:
-- VIP_ORDER
-- FRAGILE
-- EXPRESS_ONLY
+Tip: For this to work, the tag in the order JSON, the custom field name, and the value entered in this rule must match exactly.
 """
         ):
             t_in = st.text_input(
