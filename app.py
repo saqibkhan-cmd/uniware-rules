@@ -100,9 +100,12 @@ def smart_format_string(raw_input, var_name, use_ignore_case=False):
 
 def format_multi_value_condition(raw_input, var_name):
     """
-    Builds T(StringUtils).equalsAny(var_name, 'A', 'B', ...) for
-    state codes, pincodes, cities, country codes.
-    Always uses equalsAny regardless of count (no equality shorthand for these).
+    Builds the correct SpEL condition for state codes, pincodes, cities,
+    country codes, payment method, and SKU codes.
+
+    Single value  → var_name == 'VALUE'
+    Multiple CSV  → T(com.unifier.core.utils.StringUtils).equalsAny(var_name, 'A', 'B', ...)
+
     Returns "" if input is blank.
     """
     if not raw_input or not raw_input.strip():
@@ -110,6 +113,8 @@ def format_multi_value_condition(raw_input, var_name):
     items = csv_items(raw_input)
     if not items:
         return ""
+    if len(items) == 1:
+        return f"{var_name} == '{items[0]}'"
     quoted = ", ".join(f"'{v}'" for v in items)
     return f"T(com.unifier.core.utils.StringUtils).equalsAny({var_name}, {quoted})"
 
