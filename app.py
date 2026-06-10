@@ -784,8 +784,22 @@ elif module == "SHIPPING_FWD":
                 sp_item_count_op = st.selectbox(
                     "Operator",
                     ["<=", "<", ">=", ">", "=="],
+                    format_func=lambda x: {
+                        "<=": "<= (Up to N items — e.g. single or small shipments)",
+                        "<":  "<  (Fewer than N items — strictly less)",
+                        ">=": ">= (At least N items — e.g. bulk shipments)",
+                        ">":  ">  (More than N items — strictly greater)",
+                        "==": "== (Exactly N items)"
+                    }[x],
                     key="sp_item_count_op",
-                    help="Comparison operator applied to #shippingPackage.saleOrderItems.size()"
+                    help=(
+                        "Comparison operator applied to `#shippingPackage.saleOrderItems.size()`.\n\n"
+                        "• `<=` — package has **up to N** items (e.g. `<= 1` for single-item only)\n"
+                        "• `<`  — package has **fewer than N** items (strictly less)\n"
+                        "• `>=` — package has **at least N** items (e.g. bulk courier threshold)\n"
+                        "• `>`  — package has **more than N** items (strictly greater)\n"
+                        "• `==` — package has **exactly N** items"
+                    )
                 )
                 sp_item_count_val = st.text_input(
                     "Item Count Threshold",
