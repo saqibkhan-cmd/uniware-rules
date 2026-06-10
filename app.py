@@ -761,6 +761,43 @@ elif module == "SHIPPING_FWD":
 
         st.write("")
 
+
+        # ── Row 5: Item Count ────────────────────────────────────────────
+        col9, col10 = st.columns(2)
+
+        with col9:
+            st.markdown("**Number of Items in Package**")
+            sp_use_item_count = st.checkbox(
+                "Apply Item Count Filter",
+                key="sp_use_item_count",
+                help=(
+                    "Restricts courier selection by the number of line items in the package.\n\n"
+                    "Uses `#shippingPackage.saleOrderItems.size()` with your chosen operator.\n\n"
+                    "Example: operator `<=`, value `12` \u2192 "
+                    "`#shippingPackage.saleOrderItems.size() <= 12`\n\n"
+                    "Use this to assign different couriers for single-item vs multi-item shipments."
+                )
+            )
+            sp_item_count_op = "<="
+            sp_item_count_val = ""
+            if sp_use_item_count:
+                sp_item_count_op = st.selectbox(
+                    "Operator",
+                    ["<=", "<", ">=", ">", "=="],
+                    key="sp_item_count_op",
+                    help="Comparison operator applied to #shippingPackage.saleOrderItems.size()"
+                )
+                sp_item_count_val = st.text_input(
+                    "Item Count Threshold",
+                    key="sp_item_count_val",
+                    placeholder="e.g. 12"
+                ).strip()
+
+        with col10:
+            st.write("")  # intentionally empty
+
+        st.write("")
+
 # =====================================================================
 # INVENTORY CALCULATION MODULE
 # =====================================================================
@@ -879,15 +916,14 @@ if st.button("Compile Target Token Blueprint", type="primary"):
             if expr:
                 parts.append(expr)
 
-        # 8. SKU code — matches individual order item SKU, no size check
+        # 8. SKU code — single → ==, multiple → equalsAny
         if fac_use_sku and fac_sku_val.strip():
-            sku_items = csv_items(fac_sku_val)
-            if sku_items:
-                quoted = ", ".join(f"'{v}'" for v in sku_items)
-                parts.append(
-                    f"T(com.unifier.core.utils.StringUtils).equalsAny("
-                    f"#saleOrderItem.skuCode, {quoted})"
-                )
+            expr = format_multi_value_condition(
+                fac_sku_val,
+                "#saleOrderItem.skuCode"
+            )
+            if expr:
+                parts.append(expr)
 
         # 9. Item tag
         if fac_use_item_tag and fac_item_tag_val.strip():
@@ -1064,6 +1100,12 @@ if st.button("Compile Target Token Blueprint", type="primary"):
                 )
                 if expr:
                     parts.append(expr)
+
+            # 9. Item count — #shippingPackage.saleOrderItems.size()
+            if sp_use_item_count and sp_item_count_val:
+                parts.append(
+                    f"#shippingPackage.saleOrderItems.size() {sp_item_count_op} {sp_item_count_val}"
+                )
 
             if not parts:
                 st.error(
