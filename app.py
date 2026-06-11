@@ -1169,7 +1169,7 @@ if st.button("Compile Target Token Blueprint", type="primary"):
         elif sub_type == "BUFFER_1":
             final_output = f"#{{({core_expr})<=1?0:({core_expr})}}"
 
-        elif sub_type == "ZERO_SYNC":a
+        elif sub_type == "ZERO_SYNC":
             final_output = f"#{{({core_expr})*0}}"
 
     # =================================================================
