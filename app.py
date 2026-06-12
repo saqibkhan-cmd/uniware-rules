@@ -619,16 +619,27 @@ if st.button("⚙️ Compile Target Token Blueprint", type="primary"):
             e = format_multi_value_condition(fac_city_val, "#saleOrderItem.shippingAddress.city")
             if e: parts.append(e)
         if fac_use_payment and fac_payment_val:
-            parts.append(
-                f"T(com.unifier.core.utils.StringUtils).equalsAny("
-                f"#saleOrder.paymentMethod.code, '{fac_payment_val}')"
-            )
+            # Direct equality — confirmed pattern from production data
+            parts.append(f"#saleOrder.paymentMethod.code == '{fac_payment_val}'")
         if fac_use_country and fac_country_val.strip():
             e = format_multi_value_condition(fac_country_val, "#saleOrderItem.shippingAddress.countryCode")
             if e: parts.append(e)
         if fac_use_sku and fac_sku_val.strip():
-            e = format_multi_value_condition(fac_sku_val, "#saleOrderItem.skuCode")
-            if e: parts.append(e)
+            sku_items = csv_items(fac_sku_val)
+            if sku_items:
+                if len(sku_items) == 1:
+                    # Single SKU: saleOrderItems.?[skuCode == 'X'].size() > 0
+                    parts.append(
+                        f"#saleOrder.saleOrderItems.?[skuCode == '{sku_items[0]}'].size() > 0"
+                    )
+                else:
+                    # Multiple SKUs: saleOrderItems.?[T(StringUtils).equalsAny(itemType.skuCode, 'A','B')].size() > 0
+                    quoted = ", ".join(f"'{v}'" for v in sku_items)
+                    parts.append(
+                        f"#saleOrder.saleOrderItems.?["
+                        f"T(com.unifier.core.utils.StringUtils).equalsAny("
+                        f"itemType.skuCode, {quoted})].size() > 0"
+                    )
         if fac_use_item_tag and fac_item_tag_val.strip():
             parts.append(
                 f"#saleOrder.saleOrderItems.^["
