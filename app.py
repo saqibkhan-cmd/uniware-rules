@@ -311,6 +311,60 @@ if module == "FACILITY":
 
     st.write("")
 
+    # ── Row 6: Custom Field ────────────────────────────────────────────
+    col11, col12 = st.columns(2)
+
+    with col11:
+        st.markdown("**Custom Field**")
+        fac_use_cf = st.checkbox("Apply Custom Field Filter", key="fac_use_cf",
+            help=(
+                "Custom fields are extra data fields attached to an order from your sales channel "
+                "(e.g. Shopify tags, delivery instructions, on-hold flags).\n\n"
+                "**Field Name** — the exact key name as configured in Uniware "
+                "(e.g. `Tags`, `Omni`, `OnHold`, `note_attributes`)\n\n"
+                "**When to use each match type:**\n"
+                "• **Contains** — field may have multiple words/tags and you want to find one specific word "
+                "(most common — e.g. Tags field contains 'Instant_Shipping')\n"
+                "• **Exactly Equals** — field must be one specific value "
+                "(e.g. Omni field is exactly 'false')\n"
+                "• **Just Exists** — any non-empty value in the field is enough to trigger the rule "
+                "(e.g. if OnHold field is present at all)\n\n"
+                "Common field names: Tags, Omni, OnHold, note_attributes, S&N_DAY_DELIVERY"
+            )
+        )
+        fac_cf_field = ""
+        fac_cf_match = "contains"
+        fac_cf_value = ""
+        if fac_use_cf:
+            fac_cf_field = st.text_input("Custom Field Name (as configured in Uniware)", key="fac_cf_field",
+                placeholder="e.g. Tags  or  Omni  or  OnHold  or  note_attributes")
+            fac_cf_match = st.selectbox("How should the field be matched?",
+                ["contains", "equalsIgnoreCase", "not_null"],
+                format_func=lambda x: {
+                    "contains":         "🔍 Field contains this value  (e.g. Tags field has the word 'express')",
+                    "equalsIgnoreCase": "✅ Field exactly equals this value  (e.g. Omni field is exactly 'false')",
+                    "not_null":         "📌 Field just needs to exist  (any non-empty value is enough)"
+                }[x], key="fac_cf_match",
+                help=(
+                    "**🔍 Contains** — Use when the field may have multiple values or a long string and you want "
+                    "to check if your value appears anywhere in it. "
+                    "Example: Tags field = 'express, prepaid, vip' → checking for 'express' will match.\n\n"
+                    "**✅ Exactly Equals** — Use when the field must be one specific value and nothing else. "
+                    "Example: Omni field must be exactly 'false' to route to this facility.\n\n"
+                    "**📌 Just Exists** — Use when you only care that the field has been filled in, "
+                    "regardless of what the value is. Example: if 'OnHold' field is present at all, apply this rule."
+                )
+            )
+            if fac_cf_match != "not_null":
+                fac_cf_value = st.text_input("Value to match against", key="fac_cf_value",
+                    placeholder="e.g. express  or  On Hold  or  Instant_Shipping  or  false")
+
+    with col12:
+        st.write("")
+
+    st.write("")
+
+
 # =====================================================================
 # SHIPPING PROVIDER ALLOCATION MODULE
 # =====================================================================
@@ -539,6 +593,80 @@ elif module == "SHIPPING_FWD":
 
         st.write("")
 
+        # ── Row 6: Item Tag | Custom Field ───────────────────────────────
+        col11, col12 = st.columns(2)
+
+        with col11:
+            st.markdown("**Item Tag (hasAnyTag)**")
+            sp_use_item_tag = st.checkbox("Apply Item Tag Filter", key="sp_use_item_tag",
+                help=(
+                    "Checks if any item in the package has a specific tag in the item master.\n\n"
+                    "Generates: `#shippingPackage.saleOrderItems.^[itemType.hasAnyTag('TAG')] != null`\n\n"
+                    "Used for routing packages containing tagged items (e.g. mattress, furniture, fragile) "
+                    "to specific couriers."
+                )
+            )
+            sp_item_tag_val = ""
+            if sp_use_item_tag:
+                sp_item_tag_val = st.text_input("Item Tag Value", key="sp_item_tag_val",
+                    placeholder="e.g. mattress  or  Furniture  or  Accessories")
+
+        with col12:
+            st.markdown("**Custom Field**")
+            sp_use_cf = st.checkbox("Apply Custom Field Filter", key="sp_use_cf",
+                help=(
+                    "Custom fields are extra data fields attached to an order from your sales channel "
+                    "(e.g. Shopify tags, delivery type, shipping reference).\n\n"
+                    "**Field Name** — the exact key name as configured in Uniware.\n"
+                    "Common field names: Tags, Delivery_Partner, tagsfetched, "
+                    "Shopify_shipping_reference, PartialCOD, express_lmd\n\n"
+                    "**When to use each match type:**\n"
+                    "• **Contains (recommended)** — field has multiple words/tags and you want to find "
+                    "one specific word. Safe even if some orders don't have this field at all. "
+                    "Example: Tags field contains 'Express' → assign this courier.\n"
+                    "• **Contains (strict)** — same result but written differently. "
+                    "Use if your team prefers the explicit style.\n"
+                    "• **Exactly Equals** — field must be one precise value. "
+                    "Example: Delivery_Partner field is exactly 'DELHIVERY_5KGS'.\n"
+                    "• **Just Exists** — any non-empty value in the field triggers the rule. "
+                    "Example: if Shopify_shipping_reference field is present at all, use this courier."
+                )
+            )
+            sp_cf_field = ""
+            sp_cf_match = "contains_safe"
+            sp_cf_value = ""
+            if sp_use_cf:
+                sp_cf_field = st.text_input("Custom Field Name (as configured in Uniware)", key="sp_cf_field",
+                    placeholder="e.g. Tags  or  Delivery_Partner  or  tagsfetched  or  Shopify_shipping_reference")
+                sp_cf_match = st.selectbox("How should the field be matched?",
+                    ["contains_safe", "contains_strict", "equalsIgnoreCase", "not_null"],
+                    format_func=lambda x: {
+                        "contains_safe":    "🔍 Field contains this value  (recommended — handles missing fields safely)",
+                        "contains_strict":  "🔍 Field contains this value  (strict — field must also explicitly exist)",
+                        "equalsIgnoreCase": "✅ Field exactly equals this value  (ignores uppercase/lowercase)",
+                        "not_null":         "📌 Field just needs to exist  (any non-empty value is enough)"
+                    }[x], key="sp_cf_match",
+                    help=(
+                        "**🔍 Contains (recommended)** — Use this for Tags, Delivery_Partner, tagsfetched and most "
+                        "custom fields. Safely handles cases where the field may not exist on some orders — "
+                        "it won't throw an error if the field is missing. "
+                        "Example: Tags field contains 'Express' → this courier is selected.\n\n"
+                        "**🔍 Contains (strict)** — Same as above but explicitly checks the field is not empty "
+                        "before checking the value. Use when you want to be very explicit. "
+                        "Slightly longer expression but identical result.\n\n"
+                        "**✅ Exactly Equals** — Use when the field must be one precise value. "
+                        "Example: Delivery_Partner field is exactly 'DELHIVERY_5KGS'.\n\n"
+                        "**📌 Just Exists** — Use when you only care that the field has been filled in "
+                        "at all. Example: if 'Shopify_shipping_reference' field is present, apply this courier rule."
+                    )
+                )
+                if sp_cf_match != "not_null":
+                    sp_cf_value = st.text_input("Value to match against", key="sp_cf_value",
+                        placeholder="e.g. Express  or  DELHIVERY_5KGS  or  EDNDDTAG  or  fastrr, Rush")
+
+        st.write("")
+
+
 # =====================================================================
 # INVENTORY CALCULATION MODULE
 # =====================================================================
@@ -650,6 +778,17 @@ if st.button("⚙️ Compile Target Token Blueprint", type="primary"):
                 f"#saleOrder.saleOrderItems.^["
                 f"itemType.brand.contains('{fac_brand_val.strip()}')] != null"
             )
+        if fac_use_cf and fac_cf_field.strip():
+            cf_fn = fac_cf_field.strip()
+            cf_val = fac_cf_value.strip() if fac_cf_value else ""
+            cf_getter = f"T(com.unifier.services.utils.CustomFieldUtils).getCustomFieldValue(#saleOrder, '{cf_fn}')"
+            if fac_cf_match == "contains":
+                parts.append(f"{cf_getter} != null and {cf_getter}.contains('{cf_val}')")
+            elif fac_cf_match == "equalsIgnoreCase":
+                parts.append(f"{cf_getter}.equalsIgnoreCase('{cf_val}')")
+            elif fac_cf_match == "not_null":
+                parts.append(f"{cf_getter} != null")
+
 
         if not parts:
             st.error("Validation Error: Please select at least one condition and provide a value.")
@@ -773,6 +912,23 @@ if st.button("⚙️ Compile Target Token Blueprint", type="primary"):
                 parts.append(
                     f"#shippingPackage.saleOrderItems.size() {sp_item_count_op} {sp_item_count_val}"
                 )
+            if sp_use_item_tag and sp_item_tag_val.strip():
+                parts.append(
+                    f"#shippingPackage.saleOrderItems.^[itemType.hasAnyTag('{sp_item_tag_val.strip()}')] != null"
+                )
+            if sp_use_cf and sp_cf_field.strip():
+                sp_fn = sp_cf_field.strip()
+                sp_val = sp_cf_value.strip() if sp_cf_value else ""
+                sp_getter = f"T(com.unifier.services.utils.CustomFieldUtils).getCustomFieldValue(#shippingPackage.saleOrder, '{sp_fn}')"
+                if sp_cf_match == "contains_safe":
+                    parts.append(f"{sp_getter}?.contains('{sp_val}') ?: false")
+                elif sp_cf_match == "contains_strict":
+                    parts.append(f"{sp_getter} != null and {sp_getter}.contains('{sp_val}')")
+                elif sp_cf_match == "equalsIgnoreCase":
+                    parts.append(f"{sp_getter}.equalsIgnoreCase('{sp_val}')")
+                elif sp_cf_match == "not_null":
+                    parts.append(f"{sp_getter} != null")
+
 
             if not parts:
                 st.error("Validation Error: Please select at least one condition and provide a value.")
