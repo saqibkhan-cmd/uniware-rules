@@ -63,10 +63,13 @@ def csv_items(raw_input):
 def quoted_csv(raw_input):
     return [f"'{x.strip()}'" for x in raw_input.split(",") if x.strip()]
 
-def smart_format_string(raw_input, var_name, use_ignore_case=False):
+def smart_format_string(raw_input, var_name, use_ignore_case=False, strip_spaces=False):
     """
     Single value  -> var_name == 'VALUE'  or  var_name.equalsIgnoreCase('VALUE')
     Multiple CSV  -> T(StringUtils).equalsAny(...)  or  equalsIgnoreCaseAny(...)
+    strip_spaces  -> wraps var_name with .replace(" ", "") before comparing,
+                     to guard against accidental/inconsistent spaces in source data
+                     (e.g. tag or channel values arriving as "HyperLocalStore_DSBB 10").
     Returns "" if blank.
     """
     if not raw_input or not raw_input.strip():
@@ -74,15 +77,16 @@ def smart_format_string(raw_input, var_name, use_ignore_case=False):
     items = csv_items(raw_input)
     if not items:
         return ""
+    effective_var = f'{var_name}.replace(" ", "")' if strip_spaces else var_name
     if len(items) == 1:
         val = items[0]
         if use_ignore_case:
-            return f"{var_name}.equalsIgnoreCase('{val}')"
+            return f"{effective_var}.equalsIgnoreCase('{val}')"
         else:
-            return f"{var_name} == '{val}'"
+            return f"{effective_var} == '{val}'"
     quoted = ", ".join(f"'{v}'" for v in items)
     func = "equalsIgnoreCaseAny" if use_ignore_case else "equalsAny"
-    return f"T(com.unifier.core.utils.StringUtils).{func}({var_name}, {quoted})"
+    return f"T(com.unifier.core.utils.StringUtils).{func}({effective_var}, {quoted})"
 
 def format_multi_value_condition(raw_input, var_name):
     """
@@ -99,6 +103,22 @@ def format_multi_value_condition(raw_input, var_name):
         return f"{var_name} == '{items[0]}'"
     quoted = ", ".join(f"'{v}'" for v in items)
     return f"T(com.unifier.core.utils.StringUtils).equalsAny({var_name}, {quoted})"
+
+def format_not_equals_condition(raw_input, var_name):
+    """
+    Builds an exclusion condition — order must NOT match any of the given values.
+    Single value  -> var_name != 'VALUE'
+    Multiple CSV  -> var_name != 'A' and var_name != 'B' and ... (chained exclusions)
+    Returns "" if blank.
+    """
+    if not raw_input or not raw_input.strip():
+        return ""
+    items = csv_items(raw_input)
+    if not items:
+        return ""
+    if len(items) == 1:
+        return f"{var_name} != '{items[0]}'"
+    return " and ".join(f"{var_name} != '{v}'" for v in items)
 
 # =====================================================================
 # VALIDATION HELPER
@@ -189,11 +209,14 @@ if module == "FACILITY":
             help="Single value → `== 'VALUE'`\nMultiple (comma-separated) → `equalsAny(...)`\nEnable case-insensitive if codes have mixed casing.")
         fac_channel_val = ""
         fac_channel_icase = False
+        fac_channel_strip_spaces = False
         if fac_use_channel:
             fac_channel_val = st.text_input("Channel Code(s)", key="fac_channel_val",
                 placeholder="Single: SHOPIFY  |  Multiple: FLIPKART, AMAZON_IN")
             fac_channel_icase = st.checkbox("Case-Insensitive Match (equalsIgnoreCase)", key="fac_channel_icase",
                 help="Uses `.equalsIgnoreCase()` for single or `equalsIgnoreCaseAny()` for multiple values.")
+            fac_channel_strip_spaces = st.checkbox("Strip Spaces Before Matching (.replace(\" \", \"\"))", key="fac_channel_strip_spaces",
+                help="Removes all spaces from the channel code value before comparing.\nUse this if the source data sometimes contains accidental or inconsistent spaces (e.g. 'SHOPIFY ' or 'SHOP IFY').\nGenerates: `#saleOrder.channel.code.replace(\" \", \"\") == 'SHOPIFY'`")
 
     with col2:
         st.markdown("**Inventory Allocation Criteria**")
@@ -271,9 +294,16 @@ if module == "FACILITY":
     with col7:
         st.markdown("**Country Code**")
         fac_use_country = st.checkbox("Apply Country Code Filter", key="fac_use_country",
-            help="Single → `== 'IN'` | Multiple → `equalsAny(...)`\nSeparates domestic (IN) from international routing.")
+            help="Equals: Single → `== 'IN'` | Multiple → `equalsAny(...)`\nNot Equals: excludes the given value(s) instead — e.g. 'order is NOT from India'\nSeparates domestic (IN) from international routing, or excludes specific countries.")
         fac_country_val = ""
+        fac_country_mode = "equals"
         if fac_use_country:
+            fac_country_mode = st.radio("Match Type", ["equals", "not_equals"],
+                format_func=lambda x: {
+                    "equals":     "✅ Equals — order IS from this country",
+                    "not_equals": "🚫 Not Equals — order is NOT from this country"
+                }[x], horizontal=True, key="fac_country_mode",
+                help="Equals: matches orders shipping TO the given country/countries.\nNot Equals: matches orders shipping anywhere EXCEPT the given country/countries — e.g. 'channel is SHOPIFY and order is not from India'.")
             fac_country_val = st.text_input("Country Code(s)", key="fac_country_val",
                 placeholder="Single: IN  |  Multiple: IN, US, AE")
 
@@ -358,6 +388,10 @@ if module == "FACILITY":
             if fac_cf_match != "not_null":
                 fac_cf_value = st.text_input("Value to match against", key="fac_cf_value",
                     placeholder="e.g. express  or  On Hold  or  Instant_Shipping  or  false")
+            fac_cf_strip_spaces = False
+            if fac_cf_match in ("contains", "equalsIgnoreCase"):
+                fac_cf_strip_spaces = st.checkbox("Strip Spaces Before Matching (.replace(\" \", \"\"))", key="fac_cf_strip_spaces",
+                    help="Removes all spaces from the field's value before comparing.\nUse this if the custom field sometimes contains accidental spaces (e.g. a Shopify tag arriving as 'HyperLocalStore_DSBB 10' instead of 'HyperLocalStore_DSBB10').")
 
     with col12:
         st.write("")
@@ -473,11 +507,14 @@ elif module == "SHIPPING_FWD":
                 help="Single → `#shippingPackage.saleOrder.channel.code == 'VALUE'`\nMultiple → `equalsAny(...)`\nEnable case-insensitive if codes have mixed casing.")
             sp_channel_val = ""
             sp_channel_icase = False
+            sp_channel_strip_spaces = False
             if sp_use_channel:
                 sp_channel_val = st.text_input("Channel Code(s)", key="sp_channel_val",
                     placeholder="Single: SHOPIFY  |  Multiple: FLIPKART, AMAZON_IN")
                 sp_channel_icase = st.checkbox("Case-Insensitive Match (equalsIgnoreCase)", key="sp_channel_icase",
                     help="Uses `.equalsIgnoreCase()` for single or `equalsIgnoreCaseAny()` for multiple.")
+                sp_channel_strip_spaces = st.checkbox("Strip Spaces Before Matching (.replace(\" \", \"\"))", key="sp_channel_strip_spaces",
+                    help="Removes all spaces from the channel code value before comparing.\nUse this if the source data sometimes contains accidental or inconsistent spaces.\nGenerates: `#shippingPackage.saleOrder.channel.code.replace(\" \", \"\") == 'SHOPIFY'`")
 
         with col2:
             st.markdown("**State Code**")
@@ -633,36 +670,36 @@ elif module == "SHIPPING_FWD":
                 )
             )
             sp_cf_field = ""
-            sp_cf_match = "contains_safe"
+            sp_cf_match = "contains"
             sp_cf_value = ""
             if sp_use_cf:
                 sp_cf_field = st.text_input("Custom Field Name (as configured in Uniware)", key="sp_cf_field",
                     placeholder="e.g. Tags  or  Delivery_Partner  or  tagsfetched  or  Shopify_shipping_reference")
                 sp_cf_match = st.selectbox("How should the field be matched?",
-                    ["contains_safe", "contains_strict", "equalsIgnoreCase", "not_null"],
+                    ["contains", "equalsIgnoreCase", "not_null"],
                     format_func=lambda x: {
-                        "contains_safe":    "🔍 Field contains this value  (recommended — handles missing fields safely)",
-                        "contains_strict":  "🔍 Field contains this value  (strict — field must also explicitly exist)",
-                        "equalsIgnoreCase": "✅ Field exactly equals this value  (ignores uppercase/lowercase)",
+                        "contains":         "🔍 Field contains this value  (e.g. Tags has the word 'Express')",
+                        "equalsIgnoreCase": "✅ Field exactly equals this value  (e.g. Delivery_Partner is exactly 'DELHIVERY_5KGS')",
                         "not_null":         "📌 Field just needs to exist  (any non-empty value is enough)"
                     }[x], key="sp_cf_match",
                     help=(
-                        "**🔍 Contains (recommended)** — Use this for Tags, Delivery_Partner, tagsfetched and most "
-                        "custom fields. Safely handles cases where the field may not exist on some orders — "
-                        "it won't throw an error if the field is missing. "
-                        "Example: Tags field contains 'Express' → this courier is selected.\n\n"
-                        "**🔍 Contains (strict)** — Same as above but explicitly checks the field is not empty "
-                        "before checking the value. Use when you want to be very explicit. "
-                        "Slightly longer expression but identical result.\n\n"
-                        "**✅ Exactly Equals** — Use when the field must be one precise value. "
-                        "Example: Delivery_Partner field is exactly 'DELHIVERY_5KGS'.\n\n"
-                        "**📌 Just Exists** — Use when you only care that the field has been filled in "
-                        "at all. Example: if 'Shopify_shipping_reference' field is present, apply this courier rule."
+                        "**🔍 Contains** — Use when the field may have multiple words or tags and you want to "
+                        "check if one specific word appears anywhere in it. This is the most common option.\n\n"
+                        "Example: Tags field = 'express, prepaid, SR_EXPRESS' → checking for 'SR_EXPRESS' will match.\n\n"
+                        "**✅ Exactly Equals** — Use when the field must be one precise value and nothing else.\n\n"
+                        "Example: Delivery_Partner field must be exactly 'DELHIVERY_5KGS'.\n\n"
+                        "**📌 Just Exists** — Use when you only care that the field has been filled in at all, "
+                        "regardless of what the value is.\n\n"
+                        "Example: if Shopify_shipping_reference field is present, assign this courier."
                     )
                 )
                 if sp_cf_match != "not_null":
                     sp_cf_value = st.text_input("Value to match against", key="sp_cf_value",
                         placeholder="e.g. Express  or  DELHIVERY_5KGS  or  EDNDDTAG  or  fastrr, Rush")
+                sp_cf_strip_spaces = False
+                if sp_cf_match in ("contains", "equalsIgnoreCase"):
+                    sp_cf_strip_spaces = st.checkbox("Strip Spaces Before Matching (.replace(\" \", \"\"))", key="sp_cf_strip_spaces",
+                        help="Removes all spaces from the field's value before comparing.\nUse this if the custom field sometimes contains accidental spaces.")
 
         st.write("")
 
@@ -733,7 +770,7 @@ if st.button("⚙️ Compile Target Token Blueprint", type="primary"):
         parts = []
 
         if fac_use_channel and fac_channel_val.strip():
-            e = smart_format_string(fac_channel_val, "#saleOrder.channel.code", fac_channel_icase)
+            e = smart_format_string(fac_channel_val, "#saleOrder.channel.code", fac_channel_icase, fac_channel_strip_spaces)
             if e: parts.append(e)
         if fac_inv != "NONE":
             parts.append(f"#allocationCriteria.{fac_inv}()")
@@ -750,7 +787,10 @@ if st.button("⚙️ Compile Target Token Blueprint", type="primary"):
             # Direct equality — confirmed pattern from production data
             parts.append(f"#saleOrder.paymentMethod.code == '{fac_payment_val}'")
         if fac_use_country and fac_country_val.strip():
-            e = format_multi_value_condition(fac_country_val, "#saleOrderItem.shippingAddress.countryCode")
+            if fac_country_mode == "not_equals":
+                e = format_not_equals_condition(fac_country_val, "#saleOrderItem.shippingAddress.countryCode")
+            else:
+                e = format_multi_value_condition(fac_country_val, "#saleOrderItem.shippingAddress.countryCode")
             if e: parts.append(e)
         if fac_use_sku and fac_sku_val.strip():
             sku_items = csv_items(fac_sku_val)
@@ -782,10 +822,11 @@ if st.button("⚙️ Compile Target Token Blueprint", type="primary"):
             cf_fn = fac_cf_field.strip()
             cf_val = fac_cf_value.strip() if fac_cf_value else ""
             cf_getter = f"T(com.unifier.services.utils.CustomFieldUtils).getCustomFieldValue(#saleOrder, '{cf_fn}')"
+            cf_effective = f'{cf_getter}.replace(" ", "")' if fac_cf_strip_spaces else cf_getter
             if fac_cf_match == "contains":
-                parts.append(f"{cf_getter} != null and {cf_getter}.contains('{cf_val}')")
+                parts.append(f"{cf_getter} != null and {cf_effective}.contains('{cf_val}')")
             elif fac_cf_match == "equalsIgnoreCase":
-                parts.append(f"{cf_getter}.equalsIgnoreCase('{cf_val}')")
+                parts.append(f"{cf_effective}.equalsIgnoreCase('{cf_val}')")
             elif fac_cf_match == "not_null":
                 parts.append(f"{cf_getter} != null")
 
@@ -884,7 +925,7 @@ if st.button("⚙️ Compile Target Token Blueprint", type="primary"):
             parts = []
 
             if sp_use_channel and sp_channel_val.strip():
-                e = smart_format_string(sp_channel_val, "#shippingPackage.saleOrder.channel.code", sp_channel_icase)
+                e = smart_format_string(sp_channel_val, "#shippingPackage.saleOrder.channel.code", sp_channel_icase, sp_channel_strip_spaces)
                 if e: parts.append(e)
             if sp_use_state and sp_state_val.strip():
                 e = format_multi_value_condition(sp_state_val, "#shippingPackage.shippingAddress.stateCode")
@@ -920,12 +961,11 @@ if st.button("⚙️ Compile Target Token Blueprint", type="primary"):
                 sp_fn = sp_cf_field.strip()
                 sp_val = sp_cf_value.strip() if sp_cf_value else ""
                 sp_getter = f"T(com.unifier.services.utils.CustomFieldUtils).getCustomFieldValue(#shippingPackage.saleOrder, '{sp_fn}')"
-                if sp_cf_match == "contains_safe":
-                    parts.append(f"{sp_getter}?.contains('{sp_val}') ?: false")
-                elif sp_cf_match == "contains_strict":
-                    parts.append(f"{sp_getter} != null and {sp_getter}.contains('{sp_val}')")
+                sp_cf_effective = f'{sp_getter}.replace(" ", "")' if sp_cf_strip_spaces else sp_getter
+                if sp_cf_match == "contains":
+                    parts.append(f"{sp_getter} != null and {sp_cf_effective}.contains('{sp_val}')")
                 elif sp_cf_match == "equalsIgnoreCase":
-                    parts.append(f"{sp_getter}.equalsIgnoreCase('{sp_val}')")
+                    parts.append(f"{sp_cf_effective}.equalsIgnoreCase('{sp_val}')")
                 elif sp_cf_match == "not_null":
                     parts.append(f"{sp_getter} != null")
 
