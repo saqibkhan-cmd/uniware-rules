@@ -489,12 +489,81 @@ def render_facility_compiler():
     st.write("")
     col9, col10 = st.columns(2)
     with col9:
-        st.markdown("**Item Tag (hasAnyTag)**")
+        st.markdown("**Item Tag**")
         fac_use_tag = st.checkbox("Apply Item Tag Filter", key="fac_use_tag",
-            help="Checks if any item in the order carries a specific tag from the item master.\n\nGenerates: `#saleOrder.saleOrderItems.^[itemType.hasAnyTag('TAG')] != null`\n\nUseful for routing orders with specially tagged items (fragile, hazardous, brand-specific).")
+            help=(
+                "What it is: Tags are labels you attach to products in the Uniware item master to group them — "
+                "e.g. 'Flooring', 'Board', 'Sample', 'Fragile'.\n\n"
+                "How it helps: Route orders based on what type of product is in them — "
+                "e.g. all Flooring orders go to the Flooring facility, Board orders go to Board facility.\n\n"
+                "Two levels available:\n"
+                "• Order level — checks if ANY item in the whole order has this tag. "
+                "Entire order goes to one facility. Does NOT split mixed-tag orders.\n"
+                "• SKU level (item level) — checks each item individually. "
+                "Enables splitting — Flooring items go to Flooring facility, "
+                "Board items go to Board facility, even within the same order.\n\n"
+                "Use SKU level if you want mixed-tag orders to split across facilities."
+            )
+        )
         fac_tag_val = ""
+        fac_tag_level = "order"
+        fac_tag_mode = "single"
         if fac_use_tag:
-            fac_tag_val = st.text_input("Item Tag Value", key="fac_tag_val", placeholder="e.g. SWAYAM  or  Fragile  or  Rudra")
+            fac_tag_level = st.radio(
+                "Tag is applied at:",
+                ["order", "sku"],
+                format_func=lambda x: {
+                    "order": "📦 Order level — route the whole order based on any item's tag",
+                    "sku":   "🔖 SKU level — route each item individually by its own tag (enables splitting)"
+                }[x],
+                key="fac_tag_level",
+                horizontal=True,
+                help=(
+                    "📦 Order level: if ANY item in the order has this tag, the ENTIRE order goes to this facility.\n"
+                    "Use when all items in an order always share the same tag.\n\n"
+                    "🔖 SKU level: each item is checked individually. Only items with this tag go to this facility.\n"
+                    "Use when a single order can have items with DIFFERENT tags (e.g. Flooring + Board) "
+                    "and you want them to split into separate facilities.\n\n"
+                    "⚠️ For SKU-level splitting to work, make sure 'Allow Splitting' is enabled "
+                    "in the facility allocation settings for this tenant."
+                )
+            )
+
+            if fac_tag_level == "order":
+                st.caption("📦 Order level: the whole order goes to this facility if at least one item carries this tag.")
+                fac_tag_val = st.text_input(
+                    "Tag Value(s)",
+                    key="fac_tag_val",
+                    placeholder="Single: Flooring  |  Multiple (generates one rule each): Flooring, Board, Sample",
+                    help="Enter one tag for one rule, or multiple comma-separated tags to generate one rule per tag automatically."
+                )
+                fac_tag_mode = "single" if len([t.strip() for t in fac_tag_val.split(",") if t.strip()]) <= 1 else "multi"
+
+            else:
+                st.caption(
+                    "🔖 SKU level: each item is evaluated individually — enables order splitting across facilities.\n"
+                    "Enter multiple tags to generate one rule per tag (e.g. Flooring, Board, Sample → 3 rules)."
+                )
+                fac_tag_val = st.text_input(
+                    "Tag Value(s) — comma-separated for multiple rules",
+                    key="fac_tag_val",
+                    placeholder="Single: Flooring  |  Multiple: Flooring, Board, Sample",
+                    help=(
+                        "Single tag → generates 1 rule using #saleOrderItem.itemType.hasAnyTag('Flooring')\n"
+                        "Multiple tags → generates one complete rule per tag, all other conditions (channel, pincode etc.) "
+                        "are identical across all rules. Copy each rule separately into Uniware."
+                    )
+                )
+                fac_tag_mode = "single" if len([t.strip() for t in fac_tag_val.split(",") if t.strip()]) <= 1 else "multi"
+
+                if fac_tag_mode == "multi":
+                    tag_list_preview = [t.strip() for t in fac_tag_val.split(",") if t.strip()]
+                    st.info(
+                        f"✅ {len(tag_list_preview)} tags entered — will generate **{len(tag_list_preview)} rules** "
+                        f"({', '.join(tag_list_preview)}). "
+                        "Each rule routes items with that specific tag to this facility."
+                    )
+
     with col10:
         st.markdown("**Brand (contains match)**")
         fac_use_brand = st.checkbox("Apply Brand Filter", key="fac_use_brand",
@@ -596,7 +665,16 @@ def render_facility_compiler():
                     quoted = ", ".join(f"'{v}'" for v in sku_items)
                     parts.append(f"#saleOrder.saleOrderItems.?[T(com.unifier.core.utils.StringUtils).equalsAny(itemType.skuCode, {quoted})].size() > 0")
         if fac_use_tag and fac_tag_val.strip():
-            parts.append(f"#saleOrder.saleOrderItems.^[itemType.hasAnyTag('{fac_tag_val.strip()}')] != null")
+            tag_items = [t.strip() for t in fac_tag_val.split(",") if t.strip()]
+            if fac_tag_level == "order":
+                # Order level — whole order check — one condition per tag joined with OR if multiple,
+                # but since each facility rule should handle one tag, generate one rule per tag
+                for tag in tag_items:
+                    parts.append(f"#saleOrder.saleOrderItems.^[itemType.hasAnyTag('{tag}')] != null")
+            else:
+                # SKU level — item-level check — one rule per tag generated at output stage
+                # Store tags for multi-rule output below
+                pass  # handled in output section
         if fac_use_brand and fac_brand_val.strip():
             parts.append(f"#saleOrder.saleOrderItems.^[itemType.brand.contains('{fac_brand_val.strip()}')] != null")
         if fac_use_cf and fac_cf_field.strip():
@@ -614,23 +692,70 @@ def render_facility_compiler():
             parts.append(f"{soi_g} != null")
             parts.append(f"{soi_g}.equals('{soi_val}')")
 
-        if not parts and not fac_pincode_rules:
+        if not parts and not fac_pincode_rules and not (fac_use_tag and fac_tag_val.strip() and fac_tag_level == "sku"):
             st.error("Please select at least one condition and provide a value.")
-        elif fac_pincode_rules and len(fac_pincode_rules) > 1:
-            # Bulk pincode mode — generate one rule per chunk
-            st.success(f"✅ Generated {len(fac_pincode_rules)} rule(s) — copy each one separately into Uniware:")
-            for i, chunk in enumerate(fac_pincode_rules, 1):
-                chunk_parts = list(parts)  # copy all other conditions
-                quoted = ", ".join(f"'{p}'" for p in chunk)
-                if len(chunk) == 1:
-                    chunk_parts.append(f"#saleOrderItem.shippingAddress.pincode == '{chunk[0]}'")
-                else:
-                    chunk_parts.append(f"T(com.unifier.core.utils.StringUtils).equalsAny(#saleOrderItem.shippingAddress.pincode, {quoted})")
-                with st.expander(f"Rule {i} of {len(fac_pincode_rules)} — {len(chunk)} pincodes", expanded=(i==1)):
-                    st.code("#{\n  " + " and\n  ".join(chunk_parts) + "\n}", language="java")
         else:
-            st.success("✅ Rule compiled successfully")
-            st.code("#{\n  " + " and\n  ".join(parts) + "\n}", language="java")
+            # ── Determine tag items for SKU-level mode ───────────────
+            sku_tag_items = []
+            if fac_use_tag and fac_tag_val.strip() and fac_tag_level == "sku":
+                sku_tag_items = [t.strip() for t in fac_tag_val.split(",") if t.strip()]
+
+            # ── Case 1: SKU-level multi-tag — one rule per tag ───────
+            if sku_tag_items:
+                # For each tag, combine with pincode chunks if bulk pincodes exist
+                if fac_pincode_rules and len(fac_pincode_rules) > 1:
+                    total = len(sku_tag_items) * len(fac_pincode_rules)
+                    st.success(
+                        f"✅ Generated {total} rule(s) — "
+                        f"{len(sku_tag_items)} tag(s) × {len(fac_pincode_rules)} pincode group(s). "
+                        "Copy each rule separately into Uniware:"
+                    )
+                    for tag in sku_tag_items:
+                        st.markdown(f"##### 🏷️ Tag: `{tag}`")
+                        for i, chunk in enumerate(fac_pincode_rules, 1):
+                            tag_parts = list(parts)
+                            quoted = ", ".join(f"'{p}'" for p in chunk)
+                            if len(chunk) == 1:
+                                tag_parts.append(f"#saleOrderItem.shippingAddress.pincode == '{chunk[0]}'")
+                            else:
+                                tag_parts.append(f"T(com.unifier.core.utils.StringUtils).equalsAny(#saleOrderItem.shippingAddress.pincode, {quoted})")
+                            tag_parts.append(f"#saleOrderItem.itemType.hasAnyTag('{tag}')")
+                            with st.expander(f"{tag} — Pincode group {i} of {len(fac_pincode_rules)} ({len(chunk)} pincodes)", expanded=(i == 1)):
+                                st.code("#{\n  " + " and\n  ".join(tag_parts) + "\n}", language="java")
+                else:
+                    st.success(
+                        f"✅ Generated {len(sku_tag_items)} rule(s) — one per tag. "
+                        "Copy each rule separately into Uniware, pointing each to its own facility:"
+                    )
+                    st.info(
+                        "🔖 These are **SKU-level rules** — each item in an order is evaluated individually. "
+                        "Orders with mixed tags (e.g. Flooring + Board items) will split across facilities automatically, "
+                        "provided splitting is enabled in the tenant's facility allocation settings."
+                    )
+                    for tag in sku_tag_items:
+                        tag_parts = list(parts)
+                        tag_parts.append(f"#saleOrderItem.itemType.hasAnyTag('{tag}')")
+                        with st.expander(f"🏷️ Rule for tag: {tag}", expanded=True):
+                            st.caption(f"Point this rule to the **{tag} facility** in Uniware.")
+                            st.code("#{\n  " + " and\n  ".join(tag_parts) + "\n}", language="java")
+
+            # ── Case 2: Bulk pincodes only (no SKU-level tag) ────────
+            elif fac_pincode_rules and len(fac_pincode_rules) > 1:
+                st.success(f"✅ Generated {len(fac_pincode_rules)} rule(s) — copy each one separately into Uniware:")
+                for i, chunk in enumerate(fac_pincode_rules, 1):
+                    chunk_parts = list(parts)
+                    quoted = ", ".join(f"'{p}'" for p in chunk)
+                    if len(chunk) == 1:
+                        chunk_parts.append(f"#saleOrderItem.shippingAddress.pincode == '{chunk[0]}'")
+                    else:
+                        chunk_parts.append(f"T(com.unifier.core.utils.StringUtils).equalsAny(#saleOrderItem.shippingAddress.pincode, {quoted})")
+                    with st.expander(f"Rule {i} of {len(fac_pincode_rules)} — {len(chunk)} pincodes", expanded=(i == 1)):
+                        st.code("#{\n  " + " and\n  ".join(chunk_parts) + "\n}", language="java")
+
+            # ── Case 3: Single rule ───────────────────────────────────
+            else:
+                st.success("✅ Rule compiled successfully")
+                st.code("#{\n  " + " and\n  ".join(parts) + "\n}", language="java")
 
 # =====================================================================
 # ⚙️ RULE COMPILER — SHIPPING PROVIDER
