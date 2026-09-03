@@ -235,7 +235,7 @@ def decode_spel(expr):
         "#reversePickup.saleOrder.channel.code": "Return Channel Code",
         "#saleOrderItem.shippingAddress.stateCode": "State Code (Facility)",
         "#shippingPackage.shippingAddress.stateCode": "State Code (Shipping)",
-        "#reversePickup.saleOrder.shippingPackage.shippingAddress.stateCode": "State Code (Return)",
+        "#reversePickup.shippingAddress.stateCode": "State Code (Return)",
         "#saleOrderItem.shippingAddress.pincode": "Pincode (Facility)",
         "#shippingPackage.shippingAddress.pincode": "Pincode (Shipping)",
         "#saleOrderItem.shippingAddress.city": "City (Facility)",
@@ -792,7 +792,7 @@ def render_shipping_compiler():
         with col3:
             st.markdown("**State Code**")
             rev_use_state = st.checkbox("Apply State Code Filter", key="rev_use_state",
-                help="Uses: `#reversePickup.saleOrder.shippingPackage.shippingAddress.stateCode`")
+                help="Uses: `#reversePickup.shippingAddress.stateCode`")
             rev_state_val = ""
             if rev_use_state:
                 rev_sc = st.selectbox("Country (to load states)", options=ALL_COUNTRY_OPTIONS,
@@ -805,7 +805,7 @@ def render_shipping_compiler():
         with col4:
             st.markdown("**Pincode**")
             rev_use_pincode = st.checkbox("Apply Pincode Filter", key="rev_use_pincode",
-                help="Uses: `#reversePickup.saleOrder.shippingPackage.shippingAddress.pincode`")
+                help="Uses: `#reversePickup.shippingAddress.pincode`")
             rev_pincode_val = ""
             if rev_use_pincode:
                 rev_pincode_val = st.text_area("Pincode(s)", key="rev_pincode_val",
@@ -842,13 +842,13 @@ def render_shipping_compiler():
                 elif rev_weight_min: rev_parts.append(f"#reversePickup.boxWeight > {rev_weight_min}")
                 elif rev_weight_max: rev_parts.append(f"#reversePickup.boxWeight < {rev_weight_max}")
             if rev_use_state and rev_state_val.strip():
-                e = format_multi_value_condition(rev_state_val, "#reversePickup.saleOrder.shippingPackage.shippingAddress.stateCode")
+                e = format_multi_value_condition(rev_state_val, "#reversePickup.shippingAddress.stateCode")
                 if e: rev_parts.append(e)
             if rev_use_pincode and rev_pincode_val.strip():
-                e = format_multi_value_condition(rev_pincode_val, "#reversePickup.saleOrder.shippingPackage.shippingAddress.pincode")
+                e = format_multi_value_condition(rev_pincode_val, "#reversePickup.shippingAddress.pincode")
                 if e: rev_parts.append(e)
             if rev_use_city and rev_city_val.strip():
-                e = format_multi_value_condition(rev_city_val, "#reversePickup.saleOrder.shippingPackage.shippingAddress.city")
+                e = format_multi_value_condition(rev_city_val, "#reversePickup.shippingAddress.city")
                 if e: rev_parts.append(e)
             if rev_use_payment and rev_payment_val:
                 rev_parts.append(f"#reversePickup.saleOrder.paymentMethod.code == '{rev_payment_val}'")
