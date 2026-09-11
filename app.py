@@ -573,6 +573,43 @@ def render_facility_compiler():
             fac_brand_val = st.text_input("Brand Name", key="fac_brand_val", placeholder="e.g. Trend Arrest")
 
     st.write("")
+    col11a, col12a = st.columns(2)
+    with col11a:
+        st.markdown("**Third Party Shipping**")
+        fac_use_tps = st.checkbox("Apply Third Party Shipping Filter", key="fac_use_tps",
+            help=(
+                "What it is: Third Party Shipping means the customer has chosen their own courier "
+                "or the order is being shipped via a courier arranged outside of Uniware's standard flow "
+                "(e.g. Shopify-managed shipping).\n\n"
+                "How it helps: Lets you route third-party shipping orders to a specific facility, "
+                "or exclude them from certain facilities entirely.\n\n"
+                "Confirmed valid field from live production rules — used as:\n"
+                "• Is third party shipping → `#saleOrder.thirdPartyShipping`\n"
+                "• Is NOT third party shipping → `!#saleOrder.thirdPartyShipping`"
+            )
+        )
+        fac_tps_value = "true"
+        if fac_use_tps:
+            fac_tps_value = st.radio(
+                "Condition",
+                ["true", "false"],
+                format_func=lambda x: {
+                    "true":  "✅ Is Third Party Shipping — order uses a third-party / self-arranged courier",
+                    "false": "🚫 Is NOT Third Party Shipping — order uses standard Uniware courier flow"
+                }[x],
+                horizontal=True,
+                key="fac_tps_value",
+                help=(
+                    "True: matches orders where the customer or channel has arranged their own shipping\n"
+                    "False: matches orders going through the normal courier allocation in Uniware\n\n"
+                    "Most common use: route third-party shipping orders to a dedicated facility "
+                    "or exclude them from facilities that only handle standard courier orders."
+                )
+            )
+    with col12a:
+        st.write("")
+
+    st.write("")
     col11, col12 = st.columns(2)
     with col11:
         st.markdown("**Custom Field (Order Level)**")
@@ -677,6 +714,11 @@ def render_facility_compiler():
                 pass  # handled in output section
         if fac_use_brand and fac_brand_val.strip():
             parts.append(f"#saleOrder.saleOrderItems.^[itemType.brand.contains('{fac_brand_val.strip()}')] != null")
+        if fac_use_tps:
+            if fac_tps_value == "true":
+                parts.append("#saleOrder.thirdPartyShipping")
+            else:
+                parts.append("!#saleOrder.thirdPartyShipping")
         if fac_use_cf and fac_cf_field.strip():
             cf_fn = fac_cf_field.strip()
             cf_val = fac_cf_value.strip() if fac_cf_value else ""
