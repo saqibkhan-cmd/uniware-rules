@@ -192,6 +192,48 @@ def check_rule_for_issues(expr):
     if re.search(r'equalsAny\([^)]*,\s*\d+\s*[,)]', s):
         issues.append({"severity":"🔴 Critical","message":"Unquoted integer inside `equalsAny()` — type mismatch, will never match.","fix":"Quote all values: `equalsAny(field, '110001', '110002')`."})
 
+    if re.search(r'#shippingPackage\.channel\.code', s):
+        issues.append({
+            "severity": "🔴 Critical",
+            "message": "`#shippingPackage.channel.code` is missing `.saleOrder` in the path. This causes a `Property or field 'channel' cannot be found` error at runtime and crashes allocation.",
+            "fix": "Change to `#shippingPackage.saleOrder.channel.code`."
+        })
+
+    if re.search(r'paymetmethod', s, re.IGNORECASE):
+        issues.append({
+            "severity": "🔴 Critical",
+            "message": "`paymetmethod` is a typo — the correct field is `paymentMethod` (missing the letter 'n'). Rule will never evaluate correctly.",
+            "fix": "Change `paymetmethod` to `paymentMethod`."
+        })
+
+    if re.search(r'#shippingPackage\.shippingMethod\.paymentMethod', s):
+        issues.append({
+            "severity": "🔴 Critical",
+            "message": "`#shippingPackage.shippingMethod.paymentMethod.code` is the wrong path — `paymentMethod` is not on `shippingMethod`.",
+            "fix": "Change to `#shippingPackage.saleOrder.paymentMethod.code`."
+        })
+
+    if re.search(r'#reversePickup\.SaleOrder', s):
+        issues.append({
+            "severity": "🔴 Critical",
+            "message": "`#reversePickup.SaleOrder` has wrong casing — `SaleOrder` should be `saleOrder` (lowercase s). SpEL is case-sensitive.",
+            "fix": "Change `SaleOrder` to `saleOrder`."
+        })
+
+    if re.search(r'#saleOrder\.shippingAddress', s):
+        issues.append({
+            "severity": "🔴 Critical",
+            "message": "`#saleOrder.shippingAddress` is not a valid path — `shippingAddress` is not directly on `saleOrder`. This causes `Property or field 'shippingAddress' cannot be found` at runtime.",
+            "fix": "Use `#saleOrderItem.shippingAddress.stateCode` / `.pincode` / `.city` / `.countryCode` instead."
+        })
+
+    if re.search(r'hasliveInventory', s):
+        issues.append({
+            "severity": "🟠 High",
+            "message": "`hasliveInventory` has wrong casing — the correct method is `hasLiveInventory` (capital L). Rule may not match as expected.",
+            "fix": "Change `hasliveInventory` to `hasLiveInventory`."
+        })
+
     if re.search(r',\s*\)', s):
         issues.append({"severity":"🟠 High","message":"Trailing comma before `)` — causes a SpEL parse error.","fix":"Remove the trailing comma."})
 
@@ -374,15 +416,65 @@ def render_facility_compiler():
             "hasCompleteInventory","hasFulfillableInventory","hasInventory","hasLiveInventory",
             "hasLongTermInventory","hasCompleteMidTermInventory","hasAllocationWithinMaxOrderCapacity"],
             format_func=lambda x: {
-                "NONE":"— No Inventory Filter —","hasShortTermInventory":"Has Short Term Inventory",
-                "hasCompleteShortTermInventory":"Has Complete Short Term Inventory",
-                "hasCompleteLongTermInventory":"Has Complete Long Term Inventory",
-                "hasCompleteInventory":"Has Complete Inventory","hasFulfillableInventory":"Has Fulfillable Inventory",
-                "hasInventory":"Has Inventory","hasLiveInventory":"Has Live Inventory",
-                "hasLongTermInventory":"Has Long Term Inventory","hasCompleteMidTermInventory":"Has Complete Mid Term Inventory",
-                "hasAllocationWithinMaxOrderCapacity":"Has Allocation Within Max Order Capacity",
-            }.get(x,x), key="fac_inv",
-            help="Checks the facility's stock state before allocation.\n• Complete Short Term — all items have short-term stock\n• Fulfillable — stock is in a non-blocked sellable state\n• Max Order Capacity — facility hasn't hit its order cap")
+                "NONE":                                "— No Inventory Filter —",
+                "hasShortTermInventory":               "Has Short Term Inventory",
+                "hasCompleteShortTermInventory":       "Has Complete Short Term Inventory ⭐",
+                "hasCompleteLongTermInventory":        "Has Complete Long Term Inventory",
+                "hasCompleteInventory":                "Has Complete Inventory",
+                "hasFulfillableInventory":             "Has Fulfillable Inventory",
+                "hasInventory":                        "Has Inventory",
+                "hasLiveInventory":                    "Has Live Inventory",
+                "hasLongTermInventory":                "Has Long Term Inventory",
+                "hasCompleteMidTermInventory":         "Has Complete Mid Term Inventory",
+                "hasAllocationWithinMaxOrderCapacity": "Has Allocation Within Max Order Capacity",
+            }.get(x, x), key="fac_inv",
+            help=(
+                "What each option means in plain English:\n\n"
+                "— No Inventory Filter —\n"
+                "No stock check at all. Order goes to this facility regardless of whether it has stock. "
+                "Use only when you want to force allocation without checking inventory.\n\n"
+                "Has Short Term Inventory\n"
+                "At least ONE item in the order has stock ready to ship soon at this facility. "
+                "Does NOT require all items to have stock — just one is enough. "
+                "Use when partial availability is acceptable.\n\n"
+                "Has Complete Short Term Inventory ⭐ Most commonly used\n"
+                "ALL items in the order have stock ready to ship soon at this facility. "
+                "The entire order can be fulfilled from here. "
+                "Use for standard routing — ensures the facility can ship the full order without any item missing.\n\n"
+                "Has Complete Long Term Inventory\n"
+                "ALL items have stock but it is planned/reserve stock not yet ready to ship immediately "
+                "(e.g. incoming stock, pre-order buffer). "
+                "Use for facilities that hold stock for future orders.\n\n"
+                "Has Complete Mid Term Inventory\n"
+                "ALL items have stock arriving soon — not immediately available but expected in the next few days. "
+                "Sits between short-term and long-term. "
+                "Use for facilities receiving stock shortly.\n\n"
+                "Has Complete Inventory\n"
+                "ALL items have stock in any state — short, mid, or long term combined. "
+                "Broadest full-order check. Use when you want to ensure the full order can be fulfilled "
+                "but don't care whether the stock is ready now or later.\n\n"
+                "Has Fulfillable Inventory\n"
+                "ALL items have stock that is in a sellable, non-blocked state — "
+                "not reserved, not on hold, not damaged, not blocked for any reason. "
+                "Use when you want to ensure the stock can actually be picked and shipped, not just present in the system.\n\n"
+                "Has Inventory\n"
+                "Some stock exists at this facility for the order. Very loose check — "
+                "does not guarantee all items are covered or that stock is ready to ship. "
+                "Use sparingly as a last-resort fallback.\n\n"
+                "Has Live Inventory\n"
+                "Stock that is actively live and synced to sales channels. "
+                "Confirms inventory is in an active/live state in Uniware. "
+                "⚠️ Common typo: 'hasliveInventory' (lowercase l) — correct is 'hasLiveInventory' (capital L).\n\n"
+                "Has Long Term Inventory\n"
+                "At least ONE item has long-term/reserve stock at this facility. "
+                "Partial check — does not require all items. "
+                "Use when partial long-term availability is enough.\n\n"
+                "Has Allocation Within Max Order Capacity\n"
+                "The facility has not yet hit its daily/periodic order processing limit. "
+                "Prevents over-allocating orders to a facility that is already at its capacity cap. "
+                "Use when a facility has a fixed maximum number of orders it can handle per day."
+            )
+        )
 
     st.write("")
     col3, col4 = st.columns(2)
@@ -478,13 +570,23 @@ def render_facility_compiler():
     with col7:
         fac_use_country, fac_country_val, fac_country_mode = country_selectbox("fac")
     with col8:
-        st.markdown("**SKU Code**")
+        st.markdown("**SKU Code (Item Type SKU)**")
         fac_use_sku = st.checkbox("Apply SKU Code Filter", key="fac_use_sku",
-            help="Checks if any item in the order matches the given SKU(s).\n\nAt least one matching item is enough — does NOT require every item to match.\n\nSingle → `saleOrderItems.?[skuCode == 'SKU001'].size() > 0`\nMultiple → uses `equalsAny` inside collection filter.")
+            help=(
+                "What it is: Filters based on the SKU code of the product's item type in Uniware.\n\n"
+                "How it helps: Route orders containing specific products to a particular facility.\n\n"
+                "Single SKU → checks if at least one item in the order has that SKU\n"
+                "Multiple SKUs → same check across all entered SKUs\n\n"
+                "Uses `itemType.skuCode` — the correct field for SKU matching in Uniware allocation rules.\n\n"
+                "For bundle/combo products: enter the component SKU codes — "
+                "Uniware exposes component items as individual order items with their own `itemType.skuCode`."
+            )
+        )
         fac_sku_val = ""
         if fac_use_sku:
             fac_sku_val = st.text_area("SKU Code(s)", key="fac_sku_val",
-                placeholder="Single: SKU001  |  Multiple: SKU001, SKU002, SKU003", height=80)
+                placeholder="Single: SKU001  |  Multiple: SKU001, SKU002, SKU003", height=80,
+                help="Enter the exact SKU code(s) as configured in the Uniware item master. Case-sensitive.")
 
     st.write("")
     col9, col10 = st.columns(2)
@@ -657,7 +759,8 @@ def render_facility_compiler():
                 '  }\n'
                 ']\n'
                 "```\n\n"
-                "This mapping tells Uniware to read the item property named `" + (fac_soi_cf_field.strip() or "custom") + "` from the channel and make it available as a custom field for rule evaluation."
+                f"This mapping tells Uniware to read the item property named `{fac_soi_cf_field.strip() or 'custom'}` from the channel and make it available as a custom field on `itemType`.\n\n"
+                "**Field path used in rule:** `getCustomFieldValue(#saleOrderItem.itemType, 'field')` — confirmed from live production rules."
             )
 
     st.write("")
@@ -696,11 +799,12 @@ def render_facility_compiler():
         if fac_use_sku and fac_sku_val.strip():
             sku_items = csv_items(fac_sku_val)
             if sku_items:
-                if len(sku_items) == 1:
-                    parts.append(f"#saleOrder.saleOrderItems.?[skuCode == '{sku_items[0]}'].size() > 0")
-                else:
-                    quoted = ", ".join(f"'{v}'" for v in sku_items)
-                    parts.append(f"#saleOrder.saleOrderItems.?[T(com.unifier.core.utils.StringUtils).equalsAny(itemType.skuCode, {quoted})].size() > 0")
+                quoted = ", ".join(f"'{v}'" for v in sku_items)
+                parts.append(
+                    f"#saleOrder.saleOrderItems.?["
+                    f"T(com.unifier.core.utils.StringUtils).equalsAny(itemType.skuCode, {quoted})"
+                    f"].size() > 0"
+                )
         if fac_use_tag and fac_tag_val.strip():
             tag_items = [t.strip() for t in fac_tag_val.split(",") if t.strip()]
             if fac_tag_level == "order":
@@ -730,7 +834,7 @@ def render_facility_compiler():
         if fac_use_soi_cf and fac_soi_cf_field.strip() and fac_soi_cf_value.strip():
             soi_fn  = fac_soi_cf_field.strip()
             soi_val = fac_soi_cf_value.strip()
-            soi_g   = f"T(com.unifier.services.utils.CustomFieldUtils).getCustomFieldValue(#saleOrderItem, '{soi_fn}')"
+            soi_g   = f"T(com.unifier.services.utils.CustomFieldUtils).getCustomFieldValue(#saleOrderItem.itemType, '{soi_fn}')"
             parts.append(f"{soi_g} != null")
             parts.append(f"{soi_g}.equals('{soi_val}')")
 
