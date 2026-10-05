@@ -428,53 +428,79 @@ def render_facility_compiler():
                 "hasCompleteMidTermInventory":         "Has Complete Mid Term Inventory",
                 "hasAllocationWithinMaxOrderCapacity": "Has Allocation Within Max Order Capacity",
             }.get(x, x), key="fac_inv",
-            help=(
-                "What each option means in plain English:\n\n"
-                "— No Inventory Filter —\n"
-                "No stock check at all. Order goes to this facility regardless of whether it has stock. "
-                "Use only when you want to force allocation without checking inventory.\n\n"
-                "Has Short Term Inventory\n"
-                "At least ONE item in the order has stock ready to ship soon at this facility. "
-                "Does NOT require all items to have stock — just one is enough. "
-                "Use when partial availability is acceptable.\n\n"
-                "Has Complete Short Term Inventory ⭐ Most commonly used\n"
-                "ALL items in the order have stock ready to ship soon at this facility. "
-                "The entire order can be fulfilled from here. "
-                "Use for standard routing — ensures the facility can ship the full order without any item missing.\n\n"
-                "Has Complete Long Term Inventory\n"
-                "ALL items have stock but it is planned/reserve stock not yet ready to ship immediately "
-                "(e.g. incoming stock, pre-order buffer). "
-                "Use for facilities that hold stock for future orders.\n\n"
-                "Has Complete Mid Term Inventory\n"
-                "ALL items have stock arriving soon — not immediately available but expected in the next few days. "
-                "Sits between short-term and long-term. "
-                "Use for facilities receiving stock shortly.\n\n"
-                "Has Complete Inventory\n"
-                "ALL items have stock in any state — short, mid, or long term combined. "
-                "Broadest full-order check. Use when you want to ensure the full order can be fulfilled "
-                "but don't care whether the stock is ready now or later.\n\n"
-                "Has Fulfillable Inventory\n"
-                "ALL items have stock that is in a sellable, non-blocked state — "
-                "not reserved, not on hold, not damaged, not blocked for any reason. "
-                "Use when you want to ensure the stock can actually be picked and shipped, not just present in the system.\n\n"
-                "Has Inventory\n"
-                "Some stock exists at this facility for the order. Very loose check — "
-                "does not guarantee all items are covered or that stock is ready to ship. "
-                "Use sparingly as a last-resort fallback.\n\n"
-                "Has Live Inventory\n"
-                "Stock that is actively live and synced to sales channels. "
-                "Confirms inventory is in an active/live state in Uniware. "
-                "⚠️ Common typo: 'hasliveInventory' (lowercase l) — correct is 'hasLiveInventory' (capital L).\n\n"
-                "Has Long Term Inventory\n"
-                "At least ONE item has long-term/reserve stock at this facility. "
-                "Partial check — does not require all items. "
-                "Use when partial long-term availability is enough.\n\n"
-                "Has Allocation Within Max Order Capacity\n"
-                "The facility has not yet hit its daily/periodic order processing limit. "
-                "Prevents over-allocating orders to a facility that is already at its capacity cap. "
-                "Use when a facility has a fixed maximum number of orders it can handle per day."
-            )
+            help="Select which inventory condition must be met before allocating to this facility. Click '?' below for details on each option."
         )
+        with st.expander("📖 Not sure which to pick? Click here to understand each option", expanded=False):
+            st.markdown("""
+Think of this as telling the system: **"Only send the order to this facility IF..."**
+
+---
+
+**— No Inventory Filter —**
+Don't check stock at all. Send the order here no matter what.
+> Use only in special cases where you always want this facility to get the order.
+
+---
+
+**Has Short Term Inventory**
+At least one product in the order is available at this facility right now.
+> Does not guarantee all products are available — just one is enough.
+
+---
+
+**Has Complete Short Term Inventory ⭐ Most commonly used**
+Every product in the order is available at this facility right now.
+> Use this for normal day-to-day order routing. The full order can ship from this facility.
+
+---
+
+**Has Complete Mid Term Inventory**
+Every product will be available soon — stock is on its way but not yet ready to ship today.
+> Use for facilities that are getting restocked in the next few days.
+
+---
+
+**Has Complete Long Term Inventory**
+Every product is in reserve/planned stock — not available now, may take longer.
+> Use for facilities that hold buffer stock for future orders.
+
+---
+
+**Has Complete Inventory**
+Every product has some stock — could be now, soon, or later.
+> Use when you just need to confirm all products exist at the facility, regardless of when they can ship.
+
+---
+
+**Has Fulfillable Inventory**
+Every product is available AND is not blocked, held, or reserved for any other reason.
+> Use when you want to be sure the stock is actually free to pick and pack — not just sitting in the system.
+
+---
+
+**Has Inventory**
+Some stock exists at this facility. Very basic check — does not confirm all products or readiness.
+> Use only as a last-resort fallback rule.
+
+---
+
+**Has Live Inventory**
+The stock at this facility is active and live in Uniware.
+> ⚠️ Watch the spelling — `hasLiveInventory` (capital L). A common typo `hasliveInventory` (small l) will silently break the rule.
+
+---
+
+**Has Long Term Inventory**
+At least one product has reserve/long-term stock at this facility.
+> Partial check — does not require all products to have stock.
+
+---
+
+**Has Allocation Within Max Order Capacity**
+This facility has not yet reached its maximum number of orders for the day.
+> Use when a facility can only handle a fixed number of orders per day and you don't want to overload it.
+""")
+
 
     st.write("")
     col3, col4 = st.columns(2)
