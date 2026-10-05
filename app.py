@@ -589,6 +589,32 @@ def render_facility_compiler():
                 help="Enter the exact SKU code(s) as configured in the Uniware item master. Case-sensitive.")
 
     st.write("")
+    col_fac_bundle1, col_fac_bundle2 = st.columns(2)
+    with col_fac_bundle1:
+        st.markdown("**Bundle SKU Code**")
+        fac_use_bundle = st.checkbox("Apply Bundle SKU Code Filter", key="fac_use_bundle",
+            help=(
+                "What it is: Filters orders that contain a specific bundle/combo product.\n\n"
+                "How it helps: Route orders containing a specific bundle SKU to a particular facility.\n\n"
+                "Uses `bundleSkuCode` — confirmed from 21 live enabled facility rules.\n\n"
+                "Different from regular SKU (itemType.skuCode) — bundle SKU is the code of the parent bundle "
+                "and is only present on items that are part of a bundle. "
+                "A null check is always applied first to avoid errors on non-bundle items."
+            )
+        )
+        fac_bundle_val = ""
+        fac_bundle_notnull_only = False
+        if fac_use_bundle:
+            fac_bundle_notnull_only = st.checkbox("Just check if any bundle SKU exists (no specific code)", key="fac_bundle_notnull_only",
+                help="Matches any order that has at least one bundle item — regardless of which bundle SKU it is.")
+            if not fac_bundle_notnull_only:
+                fac_bundle_val = st.text_area("Bundle SKU Code(s)", key="fac_bundle_val",
+                    placeholder="Single: BUNDLE001  |  Multiple: BUNDLE001, BUNDLE002", height=80,
+                    help="Enter exact bundle SKU code(s) as in Uniware item master.")
+    with col_fac_bundle2:
+        st.write("")
+
+    st.write("")
     col9, col10 = st.columns(2)
     with col9:
         st.markdown("**Item Tag**")
@@ -805,6 +831,19 @@ def render_facility_compiler():
                     f"T(com.unifier.core.utils.StringUtils).equalsAny(itemType.skuCode, {quoted})"
                     f"].size() > 0"
                 )
+        if fac_use_bundle:
+            if fac_bundle_notnull_only:
+                parts.append("#saleOrder.saleOrderItems.^[bundleSkuCode != null] != null")
+            elif fac_bundle_val.strip():
+                bundle_items = csv_items(fac_bundle_val)
+                if bundle_items:
+                    quoted_b = ", ".join(f"'{v}'" for v in bundle_items)
+                    parts.append(
+                        f"#saleOrder.saleOrderItems.^["
+                        f"bundleSkuCode != null and "
+                        f"T(com.unifier.core.utils.StringUtils).equalsAny(bundleSkuCode, {quoted_b})"
+                        f"] != null"
+                    )
         if fac_use_tag and fac_tag_val.strip():
             tag_items = [t.strip() for t in fac_tag_val.split(",") if t.strip()]
             if fac_tag_level == "order":
@@ -1151,6 +1190,62 @@ def render_shipping_compiler():
                 sp_tag_val = st.text_input("Item Tag Value", key="sp_tag_val", placeholder="e.g. mattress  or  Furniture")
 
         st.write("")
+        col_sku1, col_sku2 = st.columns(2)
+        with col_sku1:
+            st.markdown("**SKU Code (Item Type SKU)**")
+            sp_use_sku = st.checkbox("Apply SKU Code Filter", key="sp_use_sku",
+                help=(
+                    "What it is: Filters courier selection based on specific product SKUs in the package.\n\n"
+                    "How it helps: Assign different couriers for specific products — e.g. heavy/fragile SKUs go to a specialist courier.\n\n"
+                    "Uses `itemType.skuCode` — confirmed from 20 live enabled SP rules.\n"
+                    "Single or multiple SKUs — all handled the same way."
+                )
+            )
+            sp_sku_val = ""
+            if sp_use_sku:
+                sp_sku_val = st.text_area("SKU Code(s)", key="sp_sku_val",
+                    placeholder="Single: SKU001  |  Multiple: SKU001, SKU002, SKU003", height=80,
+                    help="Enter exact SKU code(s) as in Uniware item master. Case-sensitive.")
+
+        with col_sku2:
+            st.markdown("**Bundle SKU Code**")
+            sp_use_bundle = st.checkbox("Apply Bundle SKU Code Filter", key="sp_use_bundle",
+                help=(
+                    "What it is: Filters by the bundle/combo SKU code — used when the order contains a product that is part of a bundle.\n\n"
+                    "How it helps: Route orders containing specific bundles to a particular courier.\n\n"
+                    "Uses `bundleSkuCode` — confirmed from live enabled facility rules.\n"
+                    "Add a null check — bundle SKU is only present on bundle items, not regular items."
+                )
+            )
+            sp_bundle_val = ""
+            if sp_use_bundle:
+                sp_bundle_val = st.text_area("Bundle SKU Code(s)", key="sp_bundle_val",
+                    placeholder="Single: BUNDLE001  |  Multiple: BUNDLE001, BUNDLE002", height=80,
+                    help="Enter exact bundle SKU code(s). Leave blank to check for any bundle SKU (not null check only).")
+                sp_bundle_notnull_only = st.checkbox("Just check if any bundle SKU exists (no specific code)", key="sp_bundle_notnull_only",
+                    help="Ticking this will match any package that has a bundle item — regardless of which specific bundle SKU it is.")
+
+        st.write("")
+        col_spt1, col_spt2 = st.columns(2)
+        with col_spt1:
+            st.markdown("**Shipping Package Type**")
+            sp_use_spt = st.checkbox("Apply Shipping Package Type Filter", key="sp_use_spt",
+                help=(
+                    "What it is: Filters by the type/category code assigned to the shipping package in Uniware.\n\n"
+                    "How it helps: Route packages of a specific type to a particular courier — e.g. all packages of type 'A15' go to a heavy-goods courier.\n\n"
+                    "Uses `#shippingPackage.shippingPackageType.code` — confirmed from live enabled SP rules.\n\n"
+                    "The code must match exactly as configured in your Uniware shipping package type master."
+                )
+            )
+            sp_spt_val = ""
+            if sp_use_spt:
+                sp_spt_val = st.text_input("Shipping Package Type Code", key="sp_spt_val",
+                    placeholder="e.g. A15  or  T-R1  or  A3",
+                    help="Enter the exact package type code as configured in Uniware. Case-sensitive.")
+        with col_spt2:
+            st.write("")
+
+        st.write("")
         col11, col12 = st.columns(2)
         with col11:
             st.markdown("**Custom Field**")
@@ -1220,6 +1315,30 @@ def render_shipping_compiler():
                 parts.append(f"#shippingPackage.saleOrderItems.size() {sp_items_op} {sp_items_val}")
             if sp_use_tag and sp_tag_val.strip():
                 parts.append(f"#shippingPackage.saleOrderItems.^[itemType.hasAnyTag('{sp_tag_val.strip()}')] != null")
+            if sp_use_sku and sp_sku_val.strip():
+                sku_items = csv_items(sp_sku_val)
+                if sku_items:
+                    quoted = ", ".join(f"'{v}'" for v in sku_items)
+                    parts.append(
+                        f"#shippingPackage.saleOrderItems.^["
+                        f"T(com.unifier.core.utils.StringUtils).equalsAny(itemType.skuCode, {quoted})"
+                        f"] != null"
+                    )
+            if sp_use_bundle:
+                if sp_bundle_notnull_only:
+                    parts.append("#shippingPackage.saleOrderItems.^[bundleSkuCode != null] != null")
+                elif sp_bundle_val.strip():
+                    bundle_items = csv_items(sp_bundle_val)
+                    if bundle_items:
+                        quoted_b = ", ".join(f"'{v}'" for v in bundle_items)
+                        parts.append(
+                            f"#shippingPackage.saleOrderItems.^["
+                            f"bundleSkuCode != null and "
+                            f"T(com.unifier.core.utils.StringUtils).equalsAny(bundleSkuCode, {quoted_b})"
+                            f"] != null"
+                        )
+            if sp_use_spt and sp_spt_val.strip():
+                parts.append(f"#shippingPackage.shippingPackageType.code == '{sp_spt_val.strip()}'")
             if sp_use_cf and sp_cf_field.strip():
                 sp_fn = sp_cf_field.strip()
                 sp_val = sp_cf_value.strip() if sp_cf_value else ""
