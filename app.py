@@ -79,13 +79,303 @@ def extract_state_codes(selected_states):
 # =====================================================================
 
 st.set_page_config(
-    page_title="UniCommerce Master Production Engine Suite",
+    page_title="Rule Engine · UniCommerce",
+    page_icon="⚡",
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-st.title("⚡ UniCommerce Master Production Engine Suite")
-st.caption("Version 8.0.0 | Rule Compiler · Validator · Reverse Compiler · Audit · Anomaly Suggester")
+# ── Premium UI Styling ────────────────────────────────────────────────
+st.markdown("""
+<style>
+/* ── Google Font ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ── Base ── */
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif !important;
+}
+
+/* ── Hide Streamlit default chrome ── */
+#MainMenu, footer, header { visibility: hidden; }
+.block-container {
+    padding-top: 2rem !important;
+    padding-bottom: 3rem !important;
+    max-width: 1100px !important;
+}
+
+/* ── App header ── */
+.app-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 1.5rem 0 1rem;
+    border-bottom: 1px solid rgba(128,128,128,0.15);
+    margin-bottom: 1.75rem;
+}
+.app-header .logo {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+.app-header h1 {
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    color: inherit !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    letter-spacing: -0.01em;
+}
+.app-header .version {
+    font-size: 11px;
+    color: rgba(128,128,128,0.8);
+    font-weight: 400;
+    margin-top: 2px;
+    letter-spacing: 0.02em;
+}
+
+/* ── Section headers (D2 groups) ── */
+h4 {
+    font-size: 0.78rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.08em !important;
+    text-transform: uppercase !important;
+    color: rgba(128,128,128,0.9) !important;
+    margin-bottom: 0.1rem !important;
+    margin-top: 0.5rem !important;
+}
+
+/* ── Divider ── */
+hr {
+    border: none !important;
+    border-top: 1px solid rgba(128,128,128,0.12) !important;
+    margin: 0.4rem 0 1rem 0 !important;
+}
+
+/* ── Caption / subtitle ── */
+.stCaption, [data-testid="stCaptionContainer"] p {
+    font-size: 0.72rem !important;
+    color: rgba(128,128,128,0.7) !important;
+    margin-bottom: 0.5rem !important;
+    font-weight: 400 !important;
+}
+
+/* ── Labels ── */
+.stMarkdown p strong {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.01em;
+}
+
+/* ── Inputs ── */
+input[type="text"], textarea {
+    border-radius: 8px !important;
+    border: 1px solid rgba(128,128,128,0.2) !important;
+    font-size: 0.82rem !important;
+    font-family: 'Inter', sans-serif !important;
+    transition: border-color 0.15s ease !important;
+}
+input[type="text"]:focus, textarea:focus {
+    border-color: #6366f1 !important;
+    box-shadow: 0 0 0 3px rgba(99,102,241,0.08) !important;
+}
+
+/* ── Selectbox ── */
+.stSelectbox > div > div {
+    border-radius: 8px !important;
+    border: 1px solid rgba(128,128,128,0.2) !important;
+    font-size: 0.82rem !important;
+}
+
+/* ── Multiselect ── */
+.stMultiSelect > div > div {
+    border-radius: 8px !important;
+    border: 1px solid rgba(128,128,128,0.2) !important;
+    font-size: 0.82rem !important;
+}
+.stMultiSelect [data-baseweb="tag"] {
+    border-radius: 6px !important;
+    background: rgba(99,102,241,0.1) !important;
+    color: #6366f1 !important;
+    font-size: 0.75rem !important;
+}
+
+/* ── Checkbox ── */
+.stCheckbox label {
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+    gap: 8px !important;
+}
+.stCheckbox label span {
+    font-size: 0.82rem !important;
+}
+
+/* ── Radio ── */
+.stRadio label {
+    font-size: 0.8rem !important;
+}
+.stRadio [data-testid="stMarkdownContainer"] p {
+    font-size: 0.8rem !important;
+}
+
+/* ── Primary button ── */
+.stButton > button[kind="primary"] {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    padding: 0.5rem 1.4rem !important;
+    letter-spacing: 0.01em !important;
+    box-shadow: 0 2px 8px rgba(99,102,241,0.25) !important;
+    transition: all 0.15s ease !important;
+}
+.stButton > button[kind="primary"]:hover {
+    box-shadow: 0 4px 16px rgba(99,102,241,0.35) !important;
+    transform: translateY(-1px) !important;
+}
+
+/* ── Secondary button ── */
+.stButton > button:not([kind="primary"]) {
+    border-radius: 8px !important;
+    font-size: 0.82rem !important;
+    font-weight: 500 !important;
+}
+
+/* ── Download button ── */
+.stDownloadButton > button {
+    border-radius: 8px !important;
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
+}
+
+/* ── Code block ── */
+.stCode, [data-testid="stCode"] {
+    border-radius: 10px !important;
+    border: 1px solid rgba(128,128,128,0.12) !important;
+    font-size: 0.8rem !important;
+}
+[data-testid="stCode"] pre {
+    border-radius: 10px !important;
+}
+
+/* ── Expander ── */
+.streamlit-expanderHeader {
+    border-radius: 8px !important;
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
+    background: rgba(128,128,128,0.04) !important;
+}
+.streamlit-expanderContent {
+    border-radius: 0 0 8px 8px !important;
+    border: 1px solid rgba(128,128,128,0.1) !important;
+    border-top: none !important;
+}
+
+/* ── Info / warning / success / error boxes ── */
+.stAlert {
+    border-radius: 10px !important;
+    border: none !important;
+    font-size: 0.8rem !important;
+}
+[data-testid="stNotification"] {
+    border-radius: 10px !important;
+    font-size: 0.8rem !important;
+}
+
+/* ── Success box ── */
+.element-container [data-testid="stAlert"][data-baseweb="notification"] {
+    border-radius: 10px !important;
+}
+
+/* ── Tab bar ── */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 4px !important;
+    background: rgba(128,128,128,0.06) !important;
+    border-radius: 10px !important;
+    padding: 4px !important;
+    border-bottom: none !important;
+}
+.stTabs [data-baseweb="tab"] {
+    border-radius: 7px !important;
+    font-size: 0.8rem !important;
+    font-weight: 500 !important;
+    padding: 6px 14px !important;
+    color: rgba(128,128,128,0.8) !important;
+    border: none !important;
+    transition: all 0.15s ease !important;
+}
+.stTabs [aria-selected="true"] {
+    background: white !important;
+    color: #6366f1 !important;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.08) !important;
+}
+
+/* ── Module selectbox label ── */
+.stSelectbox label {
+    font-size: 0.8rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.01em !important;
+}
+
+/* ── Metric ── */
+[data-testid="metric-container"] {
+    background: rgba(128,128,128,0.04) !important;
+    border: 1px solid rgba(128,128,128,0.1) !important;
+    border-radius: 10px !important;
+    padding: 12px 16px !important;
+}
+[data-testid="metric-container"] label {
+    font-size: 0.72rem !important;
+    font-weight: 500 !important;
+}
+[data-testid="metric-container"] [data-testid="stMetricValue"] {
+    font-size: 1.6rem !important;
+    font-weight: 700 !important;
+}
+
+/* ── Dataframe ── */
+.stDataFrame {
+    border-radius: 10px !important;
+    border: 1px solid rgba(128,128,128,0.12) !important;
+    overflow: hidden !important;
+}
+
+/* ── File uploader ── */
+[data-testid="stFileUploader"] {
+    border-radius: 10px !important;
+}
+[data-testid="stFileUploadDropzone"] {
+    border-radius: 10px !important;
+    border: 1.5px dashed rgba(128,128,128,0.25) !important;
+    background: rgba(128,128,128,0.02) !important;
+}
+[data-testid="stFileUploadDropzone"]:hover {
+    border-color: #6366f1 !important;
+    background: rgba(99,102,241,0.03) !important;
+}
+
+/* ── Sidebar (collapsed state) ── */
+section[data-testid="stSidebar"] {
+    display: none !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+# ── App Header ────────────────────────────────────────────────────────
+st.markdown("""
+<div class="app-header">
+  <div class="logo">⚡</div>
+  <div>
+    <h1>UniCommerce Rule Engine</h1>
+    <div class="version">Version 8.0.0 &nbsp;·&nbsp; Facility &nbsp;·&nbsp; Shipping Provider &nbsp;·&nbsp; Inventory &nbsp;·&nbsp; Tools</div>
+  </div>
+</div>
+""", unsafe_allow_html=True)
 
 # =====================================================================
 # HELPER METHODS
@@ -390,9 +680,13 @@ def country_selectbox(key_prefix, label="Country Code"):
 # =====================================================================
 
 def render_facility_compiler():
-    st.markdown("**🏭 Facility Allocation Rule Constructor**")
-    st.caption("Tick only the conditions your rule needs. Every ticked condition is joined with AND.")
+    st.caption("Fill in only the conditions your rule needs. Leave everything else blank — every filled condition is combined with AND.")
     st.write("")
+
+    # ── ORDER DETAILS ─────────────────────────────────────────────
+    st.markdown("#### 📦 Order Details")
+    st.caption("Conditions about the order itself — which channel it came from, how it's paid, and what stock check to apply.")
+    st.divider()
 
     col1, col2 = st.columns(2)
     with col1:
@@ -503,6 +797,11 @@ This facility has not yet reached its maximum number of orders for the day.
 
 
     st.write("")
+    # ── DELIVERY LOCATION ─────────────────────────────────────────
+    st.markdown("#### 📍 Delivery Location")
+    st.caption("Conditions about where the order is going — state, pincode, city, and country.")
+    st.divider()
+
     col3, col4 = st.columns(2)
     with col3:
         st.markdown("**State Code**")
@@ -592,6 +891,11 @@ This facility has not yet reached its maximum number of orders for the day.
                 help="PREPAID = online/card/UPI paid | COD = cash on delivery")
 
     st.write("")
+    # ── PRODUCT ───────────────────────────────────────────────────
+    st.markdown("#### 🏷️ Product")
+    st.caption("Conditions about the products in the order — SKU, tags, brand, bundle, and destination country.")
+    st.divider()
+
     col7, col8 = st.columns(2)
     with col7:
         fac_use_country, fac_country_val, fac_country_mode = country_selectbox("fac")
@@ -727,6 +1031,11 @@ This facility has not yet reached its maximum number of orders for the day.
             fac_brand_val = st.text_input("Brand Name", key="fac_brand_val", placeholder="e.g. Trend Arrest")
 
     st.write("")
+    # ── ADVANCED ──────────────────────────────────────────────────
+    st.markdown("#### ⚙️ Advanced")
+    st.caption("Custom fields, third party shipping, and item-level conditions. Use these when standard fields aren't enough.")
+    st.divider()
+
     col11a, col12a = st.columns(2)
     with col11a:
         st.markdown("**Third Party Shipping**")
@@ -973,7 +1282,6 @@ This facility has not yet reached its maximum number of orders for the day.
 # =====================================================================
 
 def render_shipping_compiler():
-    st.markdown("**🚚 Shipping Provider Allocation Rule Constructor**")
     st.caption("Toggle Reverse Pickup ON for returns/RTO rules. Leave OFF for standard forward shipments.")
     st.write("")
 
@@ -983,6 +1291,13 @@ def render_shipping_compiler():
 
     if is_reverse:
         st.markdown("##### 🔄 Reverse Pickup Conditions")
+        st.write("")
+
+        # ── ORDER DETAILS ─────────────────────────────────────────
+        st.markdown("#### 📦 Order Details")
+        st.caption("Channel the original order came from, how it was paid, and the return package weight.")
+        st.divider()
+
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("**Return Channel Code**")
@@ -999,6 +1314,11 @@ def render_shipping_compiler():
                 rev_weight_max = st.text_input("Max Box Weight — exclusive < (blank = no upper bound)", key="rev_weight_max", placeholder="e.g. 4999").strip()
 
         st.write("")
+        # ── DELIVERY LOCATION ─────────────────────────────────────
+        st.markdown("#### 📍 Pickup Location")
+        st.caption("Where the return is being picked up from.")
+        st.divider()
+
         col3, col4 = st.columns(2)
         with col3:
             st.markdown("**State Code**")
@@ -1070,6 +1390,11 @@ def render_shipping_compiler():
                 st.code("#{\n  " + " and\n  ".join(rev_parts) + "\n}", language="java")
 
     else:
+        # ── ORDER DETAILS ─────────────────────────────────────────
+        st.markdown("#### 📦 Order Details")
+        st.caption("Conditions about the order — channel, payment method, and package weight/price.")
+        st.divider()
+
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("**Channel Code**")
@@ -1100,6 +1425,11 @@ def render_shipping_compiler():
                 sp_state_val = ",".join(extract_state_codes(sp_sel))
 
         st.write("")
+        # ── DELIVERY LOCATION ─────────────────────────────────────
+        st.markdown("#### 📍 Delivery Location")
+        st.caption("Where the package is being delivered — pincode, city, and country.")
+        st.divider()
+
         col3, col4 = st.columns(2)
         with col3:
             st.markdown("**Pincode**")
@@ -1194,6 +1524,11 @@ def render_shipping_compiler():
             sp_use_country, sp_country_val, sp_country_mode = country_selectbox("sp")
 
         st.write("")
+        # ── PRODUCT ───────────────────────────────────────────────
+        st.markdown("#### 🏷️ Product")
+        st.caption("Conditions about what's in the package — SKU, tags, bundle, item count, and package type.")
+        st.divider()
+
         col9, col10 = st.columns(2)
         with col9:
             st.markdown("**Number of Items in Package**")
@@ -1272,6 +1607,11 @@ def render_shipping_compiler():
             st.write("")
 
         st.write("")
+        # ── ADVANCED ──────────────────────────────────────────────
+        st.markdown("#### ⚙️ Advanced")
+        st.caption("Custom fields from your sales channel. Use when standard fields aren't enough.")
+        st.divider()
+
         col11, col12 = st.columns(2)
         with col11:
             st.markdown("**Custom Field**")
@@ -1396,7 +1736,6 @@ def render_shipping_compiler():
 # =====================================================================
 
 def render_inventory_compiler():
-    st.markdown("**🛠️ Inventory Synchronization Formula Constructor**")
     st.caption("Check the stock pools to include. Base deductions (open sales, pendency, blocked stock) are always applied.")
     st.write("")
 
@@ -1439,7 +1778,7 @@ def render_inventory_compiler():
 
 # Step 1: Module selector
 module = st.selectbox(
-    "1. Select Module",
+    "Select what you want to build",
     ["FACILITY", "SHIPPING_FWD", "INVENTORY_CALC", "TOOLS"],
     format_func=lambda x: {
         "FACILITY":       "🏭  Facility Allocation Engine (Warehouse Assignment / Routing Rules)",
