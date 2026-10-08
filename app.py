@@ -139,14 +139,73 @@ html, body, [class*="css"] {
 
 /* ── Section headers (D2 groups) ── */
 h4 {
-    font-size: 0.78rem !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.08em !important;
+    font-size: 0.72rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.10em !important;
     text-transform: uppercase !important;
-    color: rgba(128,128,128,0.9) !important;
-    margin-bottom: 0.1rem !important;
-    margin-top: 0.5rem !important;
+    color: #6366f1 !important;
+    margin-bottom: 0 !important;
+    margin-top: 0 !important;
 }
+
+/* ── Section box wrapper ── */
+.section-box {
+    background: rgba(99,102,241,0.03);
+    border: 1px solid rgba(99,102,241,0.10);
+    border-radius: 12px;
+    padding: 1.1rem 1.2rem 0.5rem;
+    margin-bottom: 1.2rem;
+}
+.section-box-grey {
+    background: rgba(128,128,128,0.03);
+    border: 1px solid rgba(128,128,128,0.10);
+    border-radius: 12px;
+    padding: 1.1rem 1.2rem 0.5rem;
+    margin-bottom: 1.2rem;
+}
+
+/* ── Reverse pickup toggle card ── */
+.rp-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    border: 1.5px solid rgba(128,128,128,0.15);
+    background: rgba(128,128,128,0.03);
+    margin-bottom: 1rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+.rp-card.active {
+    border-color: #f59e0b;
+    background: rgba(245,158,11,0.05);
+}
+.rp-card .rp-icon {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+.rp-card .rp-text h5 {
+    font-size: 0.82rem;
+    font-weight: 600;
+    margin: 0 0 2px;
+    color: inherit;
+}
+.rp-card .rp-text p {
+    font-size: 0.72rem;
+    color: rgba(128,128,128,0.7);
+    margin: 0;
+}
+.rp-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+}
+.rp-badge.forward { background: rgba(99,102,241,0.1); color: #6366f1; }
+.rp-badge.reverse { background: rgba(245,158,11,0.15); color: #d97706; }
 
 /* ── Divider ── */
 hr {
@@ -684,8 +743,9 @@ def render_facility_compiler():
     st.write("")
 
     # ── ORDER DETAILS ─────────────────────────────────────────────
+    st.markdown('<div class="section-box">', unsafe_allow_html=True)
     st.markdown("#### 📦 Order Details")
-    st.caption("Conditions about the order itself — which channel it came from, how it's paid, and what stock check to apply.")
+    st.caption("Channel, payment, inventory check, and third party shipping.")
     st.divider()
 
     col1, col2 = st.columns(2)
@@ -704,102 +764,46 @@ def render_facility_compiler():
             fac_channel_strip = st.checkbox("Strip Spaces (.replace(\" \", \"\"))", key="fac_channel_strip",
                 help="Removes all spaces from the channel code before comparing. Use if the source may contain accidental spaces.")
     with col2:
-        st.markdown("**Inventory Allocation Criteria**")
-        fac_inv = st.selectbox("Inventory Criteria", [
+        st.markdown("**Inventory Criteria** &nbsp; *(Not sure which? hover ❓)*", help=(
+            "NO FILTER — Don't check stock at all.\n\n"
+            "SHORT TERM — At least 1 item has stock ready to ship now.\n\n"
+            "COMPLETE SHORT TERM ⭐ — ALL items have stock ready to ship now. Most commonly used.\n\n"
+            "COMPLETE MID TERM — ALL items have stock arriving soon (few days).\n\n"
+            "COMPLETE LONG TERM — ALL items have reserved/planned stock.\n\n"
+            "COMPLETE INVENTORY — ALL items have stock in any state.\n\n"
+            "FULFILLABLE — ALL items have non-blocked, pickable stock.\n\n"
+            "INVENTORY — Some stock exists. Very loose — use as fallback only.\n\n"
+            "LIVE INVENTORY — Stock is live and synced to channels.\n\n"
+            "LONG TERM — At least 1 item has reserve/long-term stock.\n\n"
+            "MAX ORDER CAPACITY — Facility hasn't hit its daily order cap."
+        ))
+        fac_inv = st.radio("", [
             "NONE","hasShortTermInventory","hasCompleteShortTermInventory","hasCompleteLongTermInventory",
             "hasCompleteInventory","hasFulfillableInventory","hasInventory","hasLiveInventory",
             "hasLongTermInventory","hasCompleteMidTermInventory","hasAllocationWithinMaxOrderCapacity"],
             format_func=lambda x: {
-                "NONE":                                "— No Inventory Filter —",
-                "hasShortTermInventory":               "Has Short Term Inventory",
-                "hasCompleteShortTermInventory":       "Has Complete Short Term Inventory ⭐",
-                "hasCompleteLongTermInventory":        "Has Complete Long Term Inventory",
-                "hasCompleteInventory":                "Has Complete Inventory",
-                "hasFulfillableInventory":             "Has Fulfillable Inventory",
+                "NONE":                                "No Filter",
+                "hasShortTermInventory":               "Short Term",
+                "hasCompleteShortTermInventory":       "Complete Short Term ⭐",
+                "hasCompleteLongTermInventory":        "Complete Long Term",
+                "hasCompleteInventory":                "Complete Inventory",
+                "hasFulfillableInventory":             "Fulfillable",
                 "hasInventory":                        "Has Inventory",
-                "hasLiveInventory":                    "Has Live Inventory",
-                "hasLongTermInventory":                "Has Long Term Inventory",
-                "hasCompleteMidTermInventory":         "Has Complete Mid Term Inventory",
-                "hasAllocationWithinMaxOrderCapacity": "Has Allocation Within Max Order Capacity",
-            }.get(x, x), key="fac_inv",
-            help="Select which inventory condition must be met before allocating to this facility. Click '?' below for details on each option."
+                "hasLiveInventory":                    "Live Inventory",
+                "hasLongTermInventory":                "Long Term",
+                "hasCompleteMidTermInventory":         "Complete Mid Term",
+                "hasAllocationWithinMaxOrderCapacity": "Max Order Capacity",
+            }.get(x, x), key="fac_inv", index=0, label_visibility="collapsed"
         )
-        with st.expander("📖 Not sure which to pick? Click here to understand each option", expanded=False):
-            st.markdown("""
-Think of this as telling the system: **"Only send the order to this facility IF..."**
-
----
-
-**— No Inventory Filter —**
-Don't check stock at all. Send the order here no matter what.
-> Use only in special cases where you always want this facility to get the order.
-
----
-
-**Has Short Term Inventory**
-At least one product in the order is available at this facility right now.
-> Does not guarantee all products are available — just one is enough.
-
----
-
-**Has Complete Short Term Inventory ⭐ Most commonly used**
-Every product in the order is available at this facility right now.
-> Use this for normal day-to-day order routing. The full order can ship from this facility.
-
----
-
-**Has Complete Mid Term Inventory**
-Every product will be available soon — stock is on its way but not yet ready to ship today.
-> Use for facilities that are getting restocked in the next few days.
-
----
-
-**Has Complete Long Term Inventory**
-Every product is in reserve/planned stock — not available now, may take longer.
-> Use for facilities that hold buffer stock for future orders.
-
----
-
-**Has Complete Inventory**
-Every product has some stock — could be now, soon, or later.
-> Use when you just need to confirm all products exist at the facility, regardless of when they can ship.
-
----
-
-**Has Fulfillable Inventory**
-Every product is available AND is not blocked, held, or reserved for any other reason.
-> Use when you want to be sure the stock is actually free to pick and pack — not just sitting in the system.
-
----
-
-**Has Inventory**
-Some stock exists at this facility. Very basic check — does not confirm all products or readiness.
-> Use only as a last-resort fallback rule.
-
----
-
-**Has Live Inventory**
-The stock at this facility is active and live in Uniware.
-> ⚠️ Watch the spelling — `hasLiveInventory` (capital L). A common typo `hasliveInventory` (small l) will silently break the rule.
-
----
-
-**Has Long Term Inventory**
-At least one product has reserve/long-term stock at this facility.
-> Partial check — does not require all products to have stock.
-
----
-
-**Has Allocation Within Max Order Capacity**
-This facility has not yet reached its maximum number of orders for the day.
-> Use when a facility can only handle a fixed number of orders per day and you don't want to overload it.
-""")
 
 
-    st.write("")
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
     # ── DELIVERY LOCATION ─────────────────────────────────────────
+    st.markdown('<div class="section-box">', unsafe_allow_html=True)
     st.markdown("#### 📍 Delivery Location")
-    st.caption("Conditions about where the order is going — state, pincode, city, and country.")
+    st.caption("State, pincode, city, and country.")
     st.divider()
 
     col3, col4 = st.columns(2)
@@ -890,10 +894,12 @@ This facility has not yet reached its maximum number of orders for the day.
             fac_payment_val = st.selectbox("Payment Method", ["PREPAID","COD"], key="fac_payment_val",
                 help="PREPAID = online/card/UPI paid | COD = cash on delivery")
 
-    st.write("")
+    st.markdown('</div>', unsafe_allow_html=True)
+
     # ── PRODUCT ───────────────────────────────────────────────────
+    st.markdown('<div class="section-box">', unsafe_allow_html=True)
     st.markdown("#### 🏷️ Product")
-    st.caption("Conditions about the products in the order — SKU, tags, brand, bundle, and destination country.")
+    st.caption("SKU, tags, brand, bundle SKU, and destination country.")
     st.divider()
 
     col7, col8 = st.columns(2)
@@ -1030,10 +1036,12 @@ This facility has not yet reached its maximum number of orders for the day.
         if fac_use_brand:
             fac_brand_val = st.text_input("Brand Name", key="fac_brand_val", placeholder="e.g. Trend Arrest")
 
-    st.write("")
+    st.markdown('</div>', unsafe_allow_html=True)
+
     # ── ADVANCED ──────────────────────────────────────────────────
+    st.markdown('<div class="section-box-grey">', unsafe_allow_html=True)
     st.markdown("#### ⚙️ Advanced")
-    st.caption("Custom fields, third party shipping, and item-level conditions. Use these when standard fields aren't enough.")
+    st.caption("Custom fields and item-level conditions. Use when standard fields aren't enough.")
     st.divider()
 
     col11a, col12a = st.columns(2)
@@ -1124,6 +1132,9 @@ This facility has not yet reached its maximum number of orders for the day.
                 "**Field path used in rule:** `getCustomFieldValue(#saleOrderItem.itemType, 'field')` — confirmed from live production rules."
             )
 
+    st.write("")
+
+    st.markdown('</div>', unsafe_allow_html=True)
     st.write("")
 
     if st.button("⚙️ Compile Facility Rule", type="primary", key="fac_compile"):
@@ -1285,8 +1296,38 @@ def render_shipping_compiler():
     st.caption("Toggle Reverse Pickup ON for returns/RTO rules. Leave OFF for standard forward shipments.")
     st.write("")
 
-    is_reverse = st.checkbox("This is a Reverse Pickup / Return Rule (uses #reversePickup context)", key="sp_is_reverse",
-        help="ON → uses `#reversePickup` variable (return courier selection)\nOFF → uses `#shippingPackage` (standard outbound courier selection)\n\nMixing these causes a runtime error — always confirm which flow you are building for.")
+    st.markdown("""
+<div style='margin-bottom:1rem'>
+<p style='font-size:0.78rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6366f1;margin-bottom:8px'>Select Rule Type</p>
+</div>
+""", unsafe_allow_html=True)
+    sp_rule_type = st.radio(
+        "Rule Type",
+        ["forward", "reverse"],
+        format_func=lambda x: {
+            "forward": "🚚  Forward Shipment — Standard outbound order courier selection",
+            "reverse": "🔄  Reverse Pickup — Return / RTO courier selection"
+        }[x],
+        horizontal=True,
+        key="sp_rule_type",
+        label_visibility="collapsed",
+        help=(
+            "Forward Shipment: builds a rule using #shippingPackage — for selecting which courier ships an outbound order to the customer.\n\n"
+            "Reverse Pickup: builds a rule using #reversePickup — for selecting which courier picks up a return or RTO from the customer.\n\n"
+            "These two use completely different SpEL variables. Mixing them will cause a runtime error."
+        )
+    )
+    is_reverse = sp_rule_type == "reverse"
+
+    if is_reverse:
+        st.markdown("""<div style='background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:8px 14px;margin-bottom:1rem;font-size:0.78rem;color:#d97706'>
+        🔄 &nbsp;<strong>Reverse Pickup mode</strong> — all fields below use <code>#reversePickup</code> context
+        </div>""", unsafe_allow_html=True)
+    else:
+        st.markdown("""<div style='background:rgba(99,102,241,0.05);border:1px solid rgba(99,102,241,0.15);border-radius:10px;padding:8px 14px;margin-bottom:1rem;font-size:0.78rem;color:#6366f1'>
+        🚚 &nbsp;<strong>Forward Shipment mode</strong> — all fields below use <code>#shippingPackage</code> context
+        </div>""", unsafe_allow_html=True)
+
     st.write("")
 
     if is_reverse:
@@ -1294,8 +1335,9 @@ def render_shipping_compiler():
         st.write("")
 
         # ── ORDER DETAILS ─────────────────────────────────────────
+        st.markdown('<div class="section-box">', unsafe_allow_html=True)
         st.markdown("#### 📦 Order Details")
-        st.caption("Channel the original order came from, how it was paid, and the return package weight.")
+        st.caption("Channel, payment method, and return package weight.")
         st.divider()
 
         col1, col2 = st.columns(2)
@@ -1313,8 +1355,10 @@ def render_shipping_compiler():
                 rev_weight_min = st.text_input("Min Box Weight — exclusive > (blank = no lower bound)", key="rev_weight_min", placeholder="e.g. 0").strip()
                 rev_weight_max = st.text_input("Max Box Weight — exclusive < (blank = no upper bound)", key="rev_weight_max", placeholder="e.g. 4999").strip()
 
-        st.write("")
-        # ── DELIVERY LOCATION ─────────────────────────────────────
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # ── PICKUP LOCATION ───────────────────────────────────────
+        st.markdown('<div class="section-box">', unsafe_allow_html=True)
         st.markdown("#### 📍 Pickup Location")
         st.caption("Where the return is being picked up from.")
         st.divider()
@@ -1354,6 +1398,7 @@ def render_shipping_compiler():
             if rev_use_payment:
                 rev_payment_val = st.selectbox("Payment Method", ["COD","PREPAID"], key="rev_payment_val")
 
+        st.markdown('</div>', unsafe_allow_html=True)
         st.write("")
         if st.button("⚙️ Compile Reverse Pickup Rule", type="primary", key="rev_compile"):
             warnings_list = []
@@ -1391,8 +1436,9 @@ def render_shipping_compiler():
 
     else:
         # ── ORDER DETAILS ─────────────────────────────────────────
+        st.markdown('<div class="section-box">', unsafe_allow_html=True)
         st.markdown("#### 📦 Order Details")
-        st.caption("Conditions about the order — channel, payment method, and package weight/price.")
+        st.caption("Channel, payment, weight, and price.")
         st.divider()
 
         col1, col2 = st.columns(2)
@@ -1424,10 +1470,12 @@ def render_shipping_compiler():
                         help="Type to search. Select one or multiple states.")
                 sp_state_val = ",".join(extract_state_codes(sp_sel))
 
-        st.write("")
+        st.markdown('</div>', unsafe_allow_html=True)
+
         # ── DELIVERY LOCATION ─────────────────────────────────────
+        st.markdown('<div class="section-box">', unsafe_allow_html=True)
         st.markdown("#### 📍 Delivery Location")
-        st.caption("Where the package is being delivered — pincode, city, and country.")
+        st.caption("State, pincode, city, and country.")
         st.divider()
 
         col3, col4 = st.columns(2)
@@ -1523,10 +1571,12 @@ def render_shipping_compiler():
         with col8:
             sp_use_country, sp_country_val, sp_country_mode = country_selectbox("sp")
 
-        st.write("")
+        st.markdown('</div>', unsafe_allow_html=True)
+
         # ── PRODUCT ───────────────────────────────────────────────
+        st.markdown('<div class="section-box">', unsafe_allow_html=True)
         st.markdown("#### 🏷️ Product")
-        st.caption("Conditions about what's in the package — SKU, tags, bundle, item count, and package type.")
+        st.caption("SKU, tags, bundle SKU, item count, and package type.")
         st.divider()
 
         col9, col10 = st.columns(2)
@@ -1606,10 +1656,12 @@ def render_shipping_compiler():
         with col_spt2:
             st.write("")
 
-        st.write("")
+        st.markdown('</div>', unsafe_allow_html=True)
+
         # ── ADVANCED ──────────────────────────────────────────────
+        st.markdown('<div class="section-box-grey">', unsafe_allow_html=True)
         st.markdown("#### ⚙️ Advanced")
-        st.caption("Custom fields from your sales channel. Use when standard fields aren't enough.")
+        st.caption("Custom fields from your sales channel.")
         st.divider()
 
         col11, col12 = st.columns(2)
@@ -1637,6 +1689,7 @@ def render_shipping_compiler():
         with col12:
             st.write("")
 
+        st.markdown('</div>', unsafe_allow_html=True)
         st.write("")
         if st.button("⚙️ Compile Shipping Provider Rule", type="primary", key="sp_compile"):
             warnings_list = []
