@@ -85,354 +85,689 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# ── Premium UI Styling ────────────────────────────────────────────────
+# ── Blue Eclipse Premium UI ───────────────────────────────────────────
 st.markdown("""
 <style>
-/* ── Google Font ── */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+/* ═══════════════════════════════════════════════════
+   BLUE ECLIPSE — Premium Design System
+   Palette: #0F0E47 · #272757 · #505081 · #8686AC
+   ═══════════════════════════════════════════════════ */
 
-/* ── Base ── */
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;0,14..32,800&display=swap');
+
+/* ── CSS Variables ── */
+:root {
+  --navy:       #0F0E47;
+  --navy-mid:   #272757;
+  --slate:      #505081;
+  --lavender:   #8686AC;
+  --surface:    #F8F8FC;
+  --white:      #FFFFFF;
+  --border:     rgba(80,80,129,0.18);
+  --border-soft: rgba(80,80,129,0.10);
+  --text-main:  #1a1a3e;
+  --text-sub:   #505081;
+  --text-muted: #8686AC;
+  --accent:     #272757;
+  --accent-glow: rgba(39,39,87,0.12);
+}
+
+/* ── Base Reset ── */
 html, body, [class*="css"] {
-    font-family: 'Inter', sans-serif !important;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+    -webkit-font-smoothing: antialiased !important;
+    color: var(--text-main) !important;
 }
 
-/* ── Hide Streamlit default chrome ── */
-#MainMenu, footer, header { visibility: hidden; }
+/* ── Hide Streamlit chrome ── */
+#MainMenu, footer, header { visibility: hidden !important; }
+
+/* ── Page container ── */
 .block-container {
-    padding-top: 2rem !important;
-    padding-bottom: 3rem !important;
-    max-width: 1100px !important;
+    padding-top: 0 !important;
+    padding-bottom: 4rem !important;
+    max-width: 1080px !important;
 }
 
-/* ── App header ── */
+/* ─────────────────────────────────────────────────
+   ANIMATIONS & TRANSITIONS
+   ───────────────────────────────────────────────── */
+
+@keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+
+@keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(39,39,87,0); }
+    50%       { box-shadow: 0 0 0 6px rgba(39,39,87,0.08); }
+}
+
+/* Apply entrance animation to main content blocks */
+.element-container {
+    animation: fadeSlideIn 0.35s cubic-bezier(0.22,0.61,0.36,1) both;
+    animation-delay: 0.02s;
+}
+
+/* ─────────────────────────────────────────────────
+   APP HEADER
+   ───────────────────────────────────────────────── */
+
 .app-header {
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 60%, #3a3a7a 100%);
+    border-radius: 18px;
+    padding: 2rem 2.2rem;
+    margin-bottom: 2rem;
+    margin-top: 1rem;
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 1.5rem 0 1rem;
-    border-bottom: 1px solid rgba(128,128,128,0.15);
-    margin-bottom: 1.75rem;
-}
-.app-header .logo {
-    width: 40px; height: 40px;
-    background: linear-gradient(135deg, #6366f1, #8b5cf6);
-    border-radius: 10px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px;
-    flex-shrink: 0;
-}
-.app-header h1 {
-    font-size: 1.25rem !important;
-    font-weight: 600 !important;
-    color: inherit !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    letter-spacing: -0.01em;
-}
-.app-header .version {
-    font-size: 11px;
-    color: rgba(128,128,128,0.8);
-    font-weight: 400;
-    margin-top: 2px;
-    letter-spacing: 0.02em;
+    justify-content: space-between;
+    animation: fadeSlideIn 0.5s cubic-bezier(0.22,0.61,0.36,1) both;
+    position: relative;
+    overflow: hidden;
 }
 
-/* ── Section headers (D2 groups) ── */
-h4 {
-    font-size: 0.72rem !important;
+.app-header::before {
+    content: '';
+    position: absolute;
+    top: -40%;
+    right: -10%;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(134,134,172,0.15) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.app-header::after {
+    content: '';
+    position: absolute;
+    bottom: -60%;
+    left: 15%;
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle, rgba(80,80,129,0.2) 0%, transparent 70%);
+    pointer-events: none;
+}
+
+.header-left { display: flex; align-items: center; gap: 16px; z-index: 1; }
+
+.header-logo {
+    width: 48px; height: 48px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+    backdrop-filter: blur(8px);
+    flex-shrink: 0;
+    transition: transform 0.25s ease;
+}
+.header-logo:hover { transform: rotate(-5deg) scale(1.05); }
+
+.header-title {
+    color: #ffffff !important;
+    font-size: 1.35rem !important;
     font-weight: 700 !important;
-    letter-spacing: 0.10em !important;
+    letter-spacing: -0.02em !important;
+    margin: 0 !important;
+    line-height: 1.2 !important;
+}
+
+.header-sub {
+    color: rgba(255,255,255,0.55) !important;
+    font-size: 0.72rem !important;
+    font-weight: 400 !important;
+    letter-spacing: 0.04em !important;
+    margin-top: 3px !important;
     text-transform: uppercase !important;
-    color: #6366f1 !important;
+}
+
+.header-badge {
+    z-index: 1;
+    background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.18);
+    border-radius: 20px;
+    padding: 5px 14px;
+    color: rgba(255,255,255,0.7) !important;
+    font-size: 0.68rem !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.06em !important;
+    text-transform: uppercase !important;
+    backdrop-filter: blur(6px);
+}
+
+/* ─────────────────────────────────────────────────
+   MODULE SELECTOR
+   ───────────────────────────────────────────────── */
+
+.module-selector-wrap {
+    background: var(--white);
+    border: 1px solid var(--border-soft);
+    border-radius: 14px;
+    padding: 1.2rem 1.4rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 1px 4px rgba(15,14,71,0.05);
+    animation: fadeSlideIn 0.4s 0.1s cubic-bezier(0.22,0.61,0.36,1) both;
+}
+
+/* ─────────────────────────────────────────────────
+   SECTION BOXES  — the D2 group containers
+   ───────────────────────────────────────────────── */
+
+.section-box {
+    background: var(--white);
+    border: 1px solid var(--border-soft);
+    border-radius: 16px;
+    padding: 1.5rem 1.6rem 1rem;
+    margin-bottom: 1.4rem;
+    box-shadow: 0 2px 12px rgba(15,14,71,0.04), 0 0 0 0 transparent;
+    transition: box-shadow 0.25s ease;
+    animation: fadeSlideIn 0.4s cubic-bezier(0.22,0.61,0.36,1) both;
+    position: relative;
+}
+
+.section-box::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: linear-gradient(180deg, var(--navy-mid), var(--slate));
+    border-radius: 16px 0 0 16px;
+    opacity: 0.6;
+}
+
+.section-box:hover {
+    box-shadow: 0 4px 20px rgba(15,14,71,0.08);
+}
+
+.section-box-grey {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 16px;
+    padding: 1.5rem 1.6rem 1rem;
+    margin-bottom: 1.4rem;
+    box-shadow: 0 1px 6px rgba(15,14,71,0.03);
+    animation: fadeSlideIn 0.4s cubic-bezier(0.22,0.61,0.36,1) both;
+    position: relative;
+}
+
+.section-box-grey::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 3px; height: 100%;
+    background: linear-gradient(180deg, var(--slate), var(--lavender));
+    border-radius: 16px 0 0 16px;
+    opacity: 0.5;
+}
+
+/* ─────────────────────────────────────────────────
+   SECTION HEADINGS  h4
+   ───────────────────────────────────────────────── */
+
+h4 {
+    font-size: 0.67rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.14em !important;
+    text-transform: uppercase !important;
+    color: var(--navy-mid) !important;
     margin-bottom: 0 !important;
     margin-top: 0 !important;
+    opacity: 0.9 !important;
 }
 
-/* ── Section box wrapper ── */
-.section-box {
-    background: rgba(99,102,241,0.03);
-    border: 1px solid rgba(99,102,241,0.10);
-    border-radius: 12px;
-    padding: 1.1rem 1.2rem 0.5rem;
-    margin-bottom: 1.2rem;
-}
-.section-box-grey {
-    background: rgba(128,128,128,0.03);
-    border: 1px solid rgba(128,128,128,0.10);
-    border-radius: 12px;
-    padding: 1.1rem 1.2rem 0.5rem;
-    margin-bottom: 1.2rem;
-}
+/* ─────────────────────────────────────────────────
+   DIVIDER
+   ───────────────────────────────────────────────── */
 
-/* ── Reverse pickup toggle card ── */
-.rp-card {
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    padding: 12px 16px;
-    border-radius: 10px;
-    border: 1.5px solid rgba(128,128,128,0.15);
-    background: rgba(128,128,128,0.03);
-    margin-bottom: 1rem;
-    cursor: pointer;
-    transition: all 0.15s ease;
-}
-.rp-card.active {
-    border-color: #f59e0b;
-    background: rgba(245,158,11,0.05);
-}
-.rp-card .rp-icon {
-    font-size: 20px;
-    flex-shrink: 0;
-}
-.rp-card .rp-text h5 {
-    font-size: 0.82rem;
-    font-weight: 600;
-    margin: 0 0 2px;
-    color: inherit;
-}
-.rp-card .rp-text p {
-    font-size: 0.72rem;
-    color: rgba(128,128,128,0.7);
-    margin: 0;
-}
-.rp-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 20px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    letter-spacing: 0.03em;
-}
-.rp-badge.forward { background: rgba(99,102,241,0.1); color: #6366f1; }
-.rp-badge.reverse { background: rgba(245,158,11,0.15); color: #d97706; }
-
-/* ── Divider ── */
 hr {
     border: none !important;
-    border-top: 1px solid rgba(128,128,128,0.12) !important;
-    margin: 0.4rem 0 1rem 0 !important;
+    border-top: 1px solid var(--border-soft) !important;
+    margin: 0.5rem 0 1.1rem 0 !important;
 }
 
-/* ── Caption / subtitle ── */
+/* ─────────────────────────────────────────────────
+   TYPOGRAPHY
+   ───────────────────────────────────────────────── */
+
 .stCaption, [data-testid="stCaptionContainer"] p {
-    font-size: 0.72rem !important;
-    color: rgba(128,128,128,0.7) !important;
-    margin-bottom: 0.5rem !important;
+    font-size: 0.71rem !important;
+    color: var(--text-muted) !important;
+    margin-bottom: 0.6rem !important;
     font-weight: 400 !important;
+    letter-spacing: 0.01em !important;
 }
 
-/* ── Labels ── */
 .stMarkdown p strong {
     font-size: 0.8rem !important;
     font-weight: 600 !important;
-    letter-spacing: 0.01em;
+    color: var(--text-main) !important;
+    letter-spacing: 0.01em !important;
 }
 
-/* ── Inputs ── */
+/* ─────────────────────────────────────────────────
+   INPUTS
+   ───────────────────────────────────────────────── */
+
 input[type="text"], textarea {
-    border-radius: 8px !important;
-    border: 1px solid rgba(128,128,128,0.2) !important;
+    border-radius: 9px !important;
+    border: 1px solid var(--border) !important;
     font-size: 0.82rem !important;
     font-family: 'Inter', sans-serif !important;
-    transition: border-color 0.15s ease !important;
+    color: var(--text-main) !important;
+    background: var(--white) !important;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
 }
 input[type="text"]:focus, textarea:focus {
-    border-color: #6366f1 !important;
-    box-shadow: 0 0 0 3px rgba(99,102,241,0.08) !important;
+    border-color: var(--navy-mid) !important;
+    box-shadow: 0 0 0 3px rgba(39,39,87,0.08) !important;
+    outline: none !important;
+}
+input[type="text"]::placeholder, textarea::placeholder {
+    color: var(--lavender) !important;
+    font-size: 0.78rem !important;
 }
 
-/* ── Selectbox ── */
+/* ─────────────────────────────────────────────────
+   SELECTBOX & MULTISELECT
+   ───────────────────────────────────────────────── */
+
 .stSelectbox > div > div {
-    border-radius: 8px !important;
-    border: 1px solid rgba(128,128,128,0.2) !important;
+    border-radius: 9px !important;
+    border: 1px solid var(--border) !important;
     font-size: 0.82rem !important;
+    background: var(--white) !important;
+    transition: border-color 0.2s ease !important;
+}
+.stSelectbox > div > div:focus-within {
+    border-color: var(--navy-mid) !important;
+    box-shadow: 0 0 0 3px rgba(39,39,87,0.08) !important;
 }
 
-/* ── Multiselect ── */
 .stMultiSelect > div > div {
-    border-radius: 8px !important;
-    border: 1px solid rgba(128,128,128,0.2) !important;
+    border-radius: 9px !important;
+    border: 1px solid var(--border) !important;
     font-size: 0.82rem !important;
+    background: var(--white) !important;
 }
 .stMultiSelect [data-baseweb="tag"] {
     border-radius: 6px !important;
-    background: rgba(99,102,241,0.1) !important;
-    color: #6366f1 !important;
-    font-size: 0.75rem !important;
-}
-
-/* ── Checkbox ── */
-.stCheckbox label {
-    font-size: 0.82rem !important;
+    background: rgba(39,39,87,0.09) !important;
+    color: var(--navy-mid) !important;
+    font-size: 0.74rem !important;
     font-weight: 500 !important;
-    gap: 8px !important;
-}
-.stCheckbox label span {
-    font-size: 0.82rem !important;
+    border: 1px solid rgba(39,39,87,0.15) !important;
 }
 
-/* ── Radio ── */
+/* ─────────────────────────────────────────────────
+   CHECKBOX
+   ───────────────────────────────────────────────── */
+
+.stCheckbox label {
+    font-size: 0.81rem !important;
+    font-weight: 500 !important;
+    color: var(--text-main) !important;
+    gap: 9px !important;
+    transition: color 0.15s ease !important;
+}
+.stCheckbox label:hover { color: var(--navy-mid) !important; }
+.stCheckbox label span { font-size: 0.81rem !important; }
+
+/* ─────────────────────────────────────────────────
+   RADIO
+   ───────────────────────────────────────────────── */
+
 .stRadio label {
     font-size: 0.8rem !important;
+    font-weight: 500 !important;
+    color: var(--text-main) !important;
+    transition: color 0.15s ease !important;
 }
 .stRadio [data-testid="stMarkdownContainer"] p {
     font-size: 0.8rem !important;
 }
 
-/* ── Primary button ── */
+/* ─────────────────────────────────────────────────
+   BUTTONS
+   ───────────────────────────────────────────────── */
+
 .stButton > button[kind="primary"] {
-    background: linear-gradient(135deg, #6366f1, #8b5cf6) !important;
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%) !important;
     color: white !important;
     border: none !important;
-    border-radius: 8px !important;
-    font-size: 0.82rem !important;
+    border-radius: 10px !important;
+    font-size: 0.84rem !important;
     font-weight: 600 !important;
-    padding: 0.5rem 1.4rem !important;
-    letter-spacing: 0.01em !important;
-    box-shadow: 0 2px 8px rgba(99,102,241,0.25) !important;
-    transition: all 0.15s ease !important;
+    padding: 0.6rem 1.8rem !important;
+    letter-spacing: 0.02em !important;
+    box-shadow: 0 3px 14px rgba(15,14,71,0.25) !important;
+    transition: all 0.22s cubic-bezier(0.22,0.61,0.36,1) !important;
+    position: relative !important;
+    overflow: hidden !important;
 }
 .stButton > button[kind="primary"]:hover {
-    box-shadow: 0 4px 16px rgba(99,102,241,0.35) !important;
+    box-shadow: 0 6px 24px rgba(15,14,71,0.35) !important;
+    transform: translateY(-2px) !important;
+}
+.stButton > button[kind="primary"]:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 2px 8px rgba(15,14,71,0.2) !important;
+}
+
+.stButton > button:not([kind="primary"]) {
+    border-radius: 9px !important;
+    font-size: 0.81rem !important;
+    font-weight: 500 !important;
+    border: 1px solid var(--border) !important;
+    transition: all 0.18s ease !important;
+    color: var(--text-main) !important;
+}
+.stButton > button:not([kind="primary"]):hover {
+    border-color: var(--navy-mid) !important;
+    color: var(--navy-mid) !important;
+    background: rgba(39,39,87,0.04) !important;
     transform: translateY(-1px) !important;
 }
 
-/* ── Secondary button ── */
-.stButton > button:not([kind="primary"]) {
-    border-radius: 8px !important;
-    font-size: 0.82rem !important;
-    font-weight: 500 !important;
-}
-
-/* ── Download button ── */
 .stDownloadButton > button {
-    border-radius: 8px !important;
+    border-radius: 9px !important;
     font-size: 0.8rem !important;
     font-weight: 500 !important;
+    border: 1px solid var(--border) !important;
+    transition: all 0.18s ease !important;
+}
+.stDownloadButton > button:hover {
+    border-color: var(--navy-mid) !important;
+    color: var(--navy-mid) !important;
+    transform: translateY(-1px) !important;
 }
 
-/* ── Code block ── */
+/* ─────────────────────────────────────────────────
+   CODE BLOCK
+   ───────────────────────────────────────────────── */
+
 .stCode, [data-testid="stCode"] {
-    border-radius: 10px !important;
-    border: 1px solid rgba(128,128,128,0.12) !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--border-soft) !important;
     font-size: 0.8rem !important;
+    animation: fadeIn 0.3s ease both !important;
 }
 [data-testid="stCode"] pre {
-    border-radius: 10px !important;
+    border-radius: 12px !important;
+    background: var(--navy) !important;
+}
+[data-testid="stCode"] code {
+    color: #c8d3f5 !important;
+    font-size: 0.8rem !important;
 }
 
-/* ── Expander ── */
+/* ─────────────────────────────────────────────────
+   EXPANDER
+   ───────────────────────────────────────────────── */
+
 .streamlit-expanderHeader {
-    border-radius: 8px !important;
-    font-size: 0.8rem !important;
+    border-radius: 9px !important;
+    font-size: 0.79rem !important;
     font-weight: 500 !important;
-    background: rgba(128,128,128,0.04) !important;
+    background: rgba(39,39,87,0.04) !important;
+    border: 1px solid var(--border-soft) !important;
+    color: var(--text-sub) !important;
+    transition: background 0.18s ease !important;
+}
+.streamlit-expanderHeader:hover {
+    background: rgba(39,39,87,0.07) !important;
 }
 .streamlit-expanderContent {
-    border-radius: 0 0 8px 8px !important;
-    border: 1px solid rgba(128,128,128,0.1) !important;
+    border-radius: 0 0 9px 9px !important;
+    border: 1px solid var(--border-soft) !important;
     border-top: none !important;
+    background: var(--surface) !important;
 }
 
-/* ── Info / warning / success / error boxes ── */
+/* ─────────────────────────────────────────────────
+   ALERT / INFO / SUCCESS / ERROR BOXES
+   ───────────────────────────────────────────────── */
+
 .stAlert {
-    border-radius: 10px !important;
-    border: none !important;
+    border-radius: 11px !important;
     font-size: 0.8rem !important;
+    border: none !important;
+    animation: fadeSlideIn 0.3s ease both !important;
 }
 [data-testid="stNotification"] {
-    border-radius: 10px !important;
+    border-radius: 11px !important;
     font-size: 0.8rem !important;
 }
 
-/* ── Success box ── */
-.element-container [data-testid="stAlert"][data-baseweb="notification"] {
-    border-radius: 10px !important;
-}
+/* ─────────────────────────────────────────────────
+   TABS
+   ───────────────────────────────────────────────── */
 
-/* ── Tab bar ── */
 .stTabs [data-baseweb="tab-list"] {
-    gap: 4px !important;
-    background: rgba(128,128,128,0.06) !important;
-    border-radius: 10px !important;
+    gap: 3px !important;
+    background: rgba(39,39,87,0.06) !important;
+    border-radius: 11px !important;
     padding: 4px !important;
     border-bottom: none !important;
 }
 .stTabs [data-baseweb="tab"] {
-    border-radius: 7px !important;
-    font-size: 0.8rem !important;
+    border-radius: 8px !important;
+    font-size: 0.79rem !important;
     font-weight: 500 !important;
-    padding: 6px 14px !important;
-    color: rgba(128,128,128,0.8) !important;
+    padding: 7px 16px !important;
+    color: var(--text-muted) !important;
     border: none !important;
-    transition: all 0.15s ease !important;
+    transition: all 0.18s ease !important;
+    letter-spacing: 0.01em !important;
+}
+.stTabs [data-baseweb="tab"]:hover {
+    color: var(--navy-mid) !important;
+    background: rgba(39,39,87,0.06) !important;
 }
 .stTabs [aria-selected="true"] {
-    background: white !important;
-    color: #6366f1 !important;
-    box-shadow: 0 1px 6px rgba(0,0,0,0.08) !important;
+    background: var(--white) !important;
+    color: var(--navy-mid) !important;
+    font-weight: 600 !important;
+    box-shadow: 0 1px 8px rgba(15,14,71,0.10) !important;
 }
 
-/* ── Module selectbox label ── */
+/* ─────────────────────────────────────────────────
+   SELECTBOX LABEL
+   ───────────────────────────────────────────────── */
+
 .stSelectbox label {
     font-size: 0.8rem !important;
     font-weight: 600 !important;
     letter-spacing: 0.01em !important;
+    color: var(--text-main) !important;
 }
 
-/* ── Metric ── */
+/* ─────────────────────────────────────────────────
+   METRICS
+   ───────────────────────────────────────────────── */
+
 [data-testid="metric-container"] {
-    background: rgba(128,128,128,0.04) !important;
-    border: 1px solid rgba(128,128,128,0.1) !important;
-    border-radius: 10px !important;
-    padding: 12px 16px !important;
+    background: var(--white) !important;
+    border: 1px solid var(--border-soft) !important;
+    border-radius: 12px !important;
+    padding: 14px 18px !important;
+    box-shadow: 0 1px 4px rgba(15,14,71,0.05) !important;
+    transition: box-shadow 0.2s ease !important;
+}
+[data-testid="metric-container"]:hover {
+    box-shadow: 0 3px 12px rgba(15,14,71,0.10) !important;
 }
 [data-testid="metric-container"] label {
-    font-size: 0.72rem !important;
-    font-weight: 500 !important;
+    font-size: 0.7rem !important;
+    font-weight: 600 !important;
+    color: var(--text-muted) !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
 }
 [data-testid="metric-container"] [data-testid="stMetricValue"] {
-    font-size: 1.6rem !important;
+    font-size: 1.8rem !important;
     font-weight: 700 !important;
+    color: var(--navy-mid) !important;
+    letter-spacing: -0.02em !important;
 }
 
-/* ── Dataframe ── */
+/* ─────────────────────────────────────────────────
+   DATAFRAME
+   ───────────────────────────────────────────────── */
+
 .stDataFrame {
-    border-radius: 10px !important;
-    border: 1px solid rgba(128,128,128,0.12) !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--border-soft) !important;
     overflow: hidden !important;
+    box-shadow: 0 1px 4px rgba(15,14,71,0.05) !important;
 }
 
-/* ── File uploader ── */
-[data-testid="stFileUploader"] {
-    border-radius: 10px !important;
-}
+/* ─────────────────────────────────────────────────
+   FILE UPLOADER
+   ───────────────────────────────────────────────── */
+
+[data-testid="stFileUploader"] { border-radius: 12px !important; }
 [data-testid="stFileUploadDropzone"] {
-    border-radius: 10px !important;
-    border: 1.5px dashed rgba(128,128,128,0.25) !important;
-    background: rgba(128,128,128,0.02) !important;
+    border-radius: 12px !important;
+    border: 1.5px dashed var(--border) !important;
+    background: var(--surface) !important;
+    transition: all 0.2s ease !important;
 }
 [data-testid="stFileUploadDropzone"]:hover {
-    border-color: #6366f1 !important;
-    background: rgba(99,102,241,0.03) !important;
+    border-color: var(--navy-mid) !important;
+    background: rgba(39,39,87,0.03) !important;
 }
 
-/* ── Sidebar (collapsed state) ── */
-section[data-testid="stSidebar"] {
-    display: none !important;
+/* ─────────────────────────────────────────────────
+   RULE TYPE TOGGLE (Forward / Reverse)
+   ───────────────────────────────────────────────── */
+
+.rule-type-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 1.4rem;
 }
+.rule-type-option {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--white);
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.22,0.61,0.36,1);
+    text-align: center;
+}
+.rule-type-option.active-fwd {
+    border-color: var(--navy-mid);
+    background: rgba(39,39,87,0.05);
+    box-shadow: 0 2px 10px rgba(15,14,71,0.10);
+}
+.rule-type-option.active-rev {
+    border-color: #7c3aed;
+    background: rgba(124,58,237,0.05);
+    box-shadow: 0 2px 10px rgba(124,58,237,0.12);
+}
+.rule-type-option .rt-icon { font-size: 1.3rem; margin-bottom: 4px; }
+.rule-type-option .rt-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-main);
+    letter-spacing: 0.01em;
+}
+.rule-type-option .rt-sub {
+    font-size: 0.68rem;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+/* ─────────────────────────────────────────────────
+   STATUS BANNERS (Forward / Reverse active)
+   ───────────────────────────────────────────────── */
+
+.banner-fwd {
+    background: rgba(39,39,87,0.05);
+    border: 1px solid rgba(39,39,87,0.15);
+    border-left: 3px solid var(--navy-mid);
+    border-radius: 9px;
+    padding: 9px 14px;
+    margin-bottom: 1.2rem;
+    font-size: 0.78rem;
+    color: var(--navy-mid);
+    font-weight: 500;
+    animation: fadeSlideIn 0.3s ease both;
+}
+.banner-rev {
+    background: rgba(124,58,237,0.05);
+    border: 1px solid rgba(124,58,237,0.18);
+    border-left: 3px solid #7c3aed;
+    border-radius: 9px;
+    padding: 9px 14px;
+    margin-bottom: 1.2rem;
+    font-size: 0.78rem;
+    color: #7c3aed;
+    font-weight: 500;
+    animation: fadeSlideIn 0.3s ease both;
+}
+
+/* ─────────────────────────────────────────────────
+   FOOTER / CREATOR CREDIT
+   ───────────────────────────────────────────────── */
+
+.app-footer {
+    margin-top: 3rem;
+    padding: 1.4rem 0 0.6rem;
+    border-top: 1px solid var(--border-soft);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    animation: fadeIn 0.5s 0.3s ease both;
+}
+.footer-credit {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    letter-spacing: 0.02em;
+}
+.footer-credit span {
+    color: var(--navy-mid);
+    font-weight: 600;
+}
+.footer-version {
+    font-size: 0.65rem;
+    color: var(--lavender);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* ─────────────────────────────────────────────────
+   SIDEBAR HIDDEN
+   ───────────────────────────────────────────────── */
+
+section[data-testid="stSidebar"] { display: none !important; }
+
 </style>
 """, unsafe_allow_html=True)
 
 # ── App Header ────────────────────────────────────────────────────────
 st.markdown("""
 <div class="app-header">
-  <div class="logo">⚡</div>
-  <div>
-    <h1>UniCommerce Rule Engine</h1>
-    <div class="version">Version 8.0.0 &nbsp;·&nbsp; Facility &nbsp;·&nbsp; Shipping Provider &nbsp;·&nbsp; Inventory &nbsp;·&nbsp; Tools</div>
+  <div class="header-left">
+    <div class="header-logo">⚡</div>
+    <div>
+      <div class="header-title">UniCommerce Rule Engine</div>
+      <div class="header-sub">Facility &nbsp;·&nbsp; Shipping Provider &nbsp;·&nbsp; Inventory &nbsp;·&nbsp; Tools</div>
+    </div>
   </div>
+  <div class="header-badge">v8.0.0</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -764,36 +1099,37 @@ def render_facility_compiler():
             fac_channel_strip = st.checkbox("Strip Spaces (.replace(\" \", \"\"))", key="fac_channel_strip",
                 help="Removes all spaces from the channel code before comparing. Use if the source may contain accidental spaces.")
     with col2:
-        st.markdown("**Inventory Criteria** &nbsp; *(Not sure which? hover ❓)*", help=(
-            "NO FILTER — Don't check stock at all.\n\n"
-            "SHORT TERM — At least 1 item has stock ready to ship now.\n\n"
-            "COMPLETE SHORT TERM ⭐ — ALL items have stock ready to ship now. Most commonly used.\n\n"
-            "COMPLETE MID TERM — ALL items have stock arriving soon (few days).\n\n"
-            "COMPLETE LONG TERM — ALL items have reserved/planned stock.\n\n"
-            "COMPLETE INVENTORY — ALL items have stock in any state.\n\n"
-            "FULFILLABLE — ALL items have non-blocked, pickable stock.\n\n"
-            "INVENTORY — Some stock exists. Very loose — use as fallback only.\n\n"
-            "LIVE INVENTORY — Stock is live and synced to channels.\n\n"
-            "LONG TERM — At least 1 item has reserve/long-term stock.\n\n"
-            "MAX ORDER CAPACITY — Facility hasn't hit its daily order cap."
-        ))
-        fac_inv = st.radio("", [
+        st.markdown("**Inventory Criteria**")
+        fac_inv = st.selectbox("Inventory Criteria", [
             "NONE","hasShortTermInventory","hasCompleteShortTermInventory","hasCompleteLongTermInventory",
             "hasCompleteInventory","hasFulfillableInventory","hasInventory","hasLiveInventory",
             "hasLongTermInventory","hasCompleteMidTermInventory","hasAllocationWithinMaxOrderCapacity"],
             format_func=lambda x: {
-                "NONE":                                "No Filter",
-                "hasShortTermInventory":               "Short Term",
-                "hasCompleteShortTermInventory":       "Complete Short Term ⭐",
-                "hasCompleteLongTermInventory":        "Complete Long Term",
-                "hasCompleteInventory":                "Complete Inventory",
-                "hasFulfillableInventory":             "Fulfillable",
+                "NONE":                                "— No Inventory Filter —",
+                "hasShortTermInventory":               "Has Short Term Inventory",
+                "hasCompleteShortTermInventory":       "Has Complete Short Term Inventory ⭐",
+                "hasCompleteLongTermInventory":        "Has Complete Long Term Inventory",
+                "hasCompleteInventory":                "Has Complete Inventory",
+                "hasFulfillableInventory":             "Has Fulfillable Inventory",
                 "hasInventory":                        "Has Inventory",
-                "hasLiveInventory":                    "Live Inventory",
-                "hasLongTermInventory":                "Long Term",
-                "hasCompleteMidTermInventory":         "Complete Mid Term",
-                "hasAllocationWithinMaxOrderCapacity": "Max Order Capacity",
-            }.get(x, x), key="fac_inv", index=0, label_visibility="collapsed"
+                "hasLiveInventory":                    "Has Live Inventory",
+                "hasLongTermInventory":                "Has Long Term Inventory",
+                "hasCompleteMidTermInventory":         "Has Complete Mid Term Inventory",
+                "hasAllocationWithinMaxOrderCapacity": "Has Allocation Within Max Order Capacity",
+            }.get(x, x), key="fac_inv", label_visibility="collapsed",
+            help=(
+                "NO FILTER — Don't check stock at all.\n\n"
+                "SHORT TERM — At least 1 item has stock ready to ship now.\n\n"
+                "COMPLETE SHORT TERM ⭐ — ALL items ready to ship. Most commonly used.\n\n"
+                "COMPLETE MID TERM — ALL items have stock arriving soon.\n\n"
+                "COMPLETE LONG TERM — ALL items have reserved/planned stock.\n\n"
+                "COMPLETE INVENTORY — ALL items have stock in any state.\n\n"
+                "FULFILLABLE — ALL items have non-blocked, pickable stock.\n\n"
+                "HAS INVENTORY — Some stock exists. Use as last-resort fallback.\n\n"
+                "LIVE INVENTORY — Stock is live and synced to channels.\n\n"
+                "LONG TERM — At least 1 item has reserve stock.\n\n"
+                "MAX ORDER CAPACITY — Facility hasn't hit its daily order cap."
+            )
         )
 
 
@@ -1320,13 +1656,9 @@ def render_shipping_compiler():
     is_reverse = sp_rule_type == "reverse"
 
     if is_reverse:
-        st.markdown("""<div style='background:rgba(245,158,11,0.07);border:1px solid rgba(245,158,11,0.25);border-radius:10px;padding:8px 14px;margin-bottom:1rem;font-size:0.78rem;color:#d97706'>
-        🔄 &nbsp;<strong>Reverse Pickup mode</strong> — all fields below use <code>#reversePickup</code> context
-        </div>""", unsafe_allow_html=True)
+        st.markdown('<div class="banner-rev">🔄 &nbsp;<strong>Reverse Pickup mode</strong> — all fields below use <code>#reversePickup</code> context</div>', unsafe_allow_html=True)
     else:
-        st.markdown("""<div style='background:rgba(99,102,241,0.05);border:1px solid rgba(99,102,241,0.15);border-radius:10px;padding:8px 14px;margin-bottom:1rem;font-size:0.78rem;color:#6366f1'>
-        🚚 &nbsp;<strong>Forward Shipment mode</strong> — all fields below use <code>#shippingPackage</code> context
-        </div>""", unsafe_allow_html=True)
+        st.markdown('<div class="banner-fwd">🚚 &nbsp;<strong>Forward Shipment mode</strong> — all fields below use <code>#shippingPackage</code> context</div>', unsafe_allow_html=True)
 
     st.write("")
 
@@ -1829,18 +2161,129 @@ def render_inventory_compiler():
 # MAIN LAYOUT — MODULE SELECTOR → TABS
 # =====================================================================
 
-# Step 1: Module selector
-module = st.selectbox(
-    "Select what you want to build",
-    ["FACILITY", "SHIPPING_FWD", "INVENTORY_CALC", "TOOLS"],
-    format_func=lambda x: {
-        "FACILITY":       "🏭  Facility Allocation Engine (Warehouse Assignment / Routing Rules)",
-        "SHIPPING_FWD":   "🚚  Shipping Provider Allocation Engine (Courier / Logistics Partner Selection)",
-        "INVENTORY_CALC": "🛠️  Inventory Synchronization Calculation Formula Wrapper",
-        "TOOLS":          "🔧  Tools (Validator · Reverse Compiler · Audit · Anomaly Suggester)"
-    }[x],
-    help="Select what you want to do:\n\n• Facility Allocation — build a rule deciding which warehouse fulfils an order\n• Shipping Provider — build a rule deciding which courier ships a package\n• Inventory Sync — build a formula for how much stock to push to a channel\n• Tools — validate, decode, audit, or analyse existing rules"
-)
+# ── Module Tab Switcher ───────────────────────────────────────────────
+if "module" not in st.session_state:
+    st.session_state.module = "FACILITY"
+
+st.markdown("""
+<style>
+.nav-wrap {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 2rem;
+}
+.nav-card {
+    background: #ffffff;
+    border: 1.5px solid rgba(80,80,129,0.14);
+    border-radius: 16px;
+    padding: 1.4rem 1rem 1.1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.22s cubic-bezier(0.22,0.61,0.36,1);
+    box-shadow: 0 1px 4px rgba(15,14,71,0.04);
+    position: relative;
+    overflow: hidden;
+}
+.nav-card::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #0F0E47, #505081);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.22s cubic-bezier(0.22,0.61,0.36,1);
+    border-radius: 0 0 16px 16px;
+}
+.nav-card:hover {
+    box-shadow: 0 6px 20px rgba(15,14,71,0.10);
+    transform: translateY(-2px);
+    border-color: rgba(39,39,87,0.25);
+}
+.nav-card:hover::after { transform: scaleX(1); }
+.nav-card.active {
+    background: linear-gradient(145deg, #0F0E47 0%, #272757 100%);
+    border-color: #0F0E47;
+    box-shadow: 0 8px 28px rgba(15,14,71,0.25);
+    transform: translateY(-3px);
+}
+.nav-card.active::after { transform: scaleX(0); }
+.nav-icon {
+    font-size: 2.2rem;
+    margin-bottom: 0.6rem;
+    display: block;
+    transition: transform 0.22s ease;
+}
+.nav-card:hover .nav-icon { transform: scale(1.08); }
+.nav-card.active .nav-icon { filter: brightness(1.4); }
+.nav-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #272757;
+    display: block;
+    transition: color 0.18s ease;
+}
+.nav-card.active .nav-label { color: rgba(255,255,255,0.95); }
+.nav-sub {
+    font-size: 0.65rem;
+    color: #8686AC;
+    margin-top: 3px;
+    display: block;
+    font-weight: 400;
+    line-height: 1.35;
+    transition: color 0.18s ease;
+}
+.nav-card.active .nav-sub { color: rgba(255,255,255,0.5); }
+</style>
+""", unsafe_allow_html=True)
+
+col_a, col_b, col_c, col_d = st.columns(4)
+
+with col_a:
+    active_a = "active" if st.session_state.module == "FACILITY" else ""
+    st.markdown(f'<div class="nav-card {active_a}"><span class="nav-icon">🏭</span><span class="nav-label">Facility</span><span class="nav-sub">Warehouse allocation rules</span></div>', unsafe_allow_html=True)
+    if st.button("Facility", key="nav_facility", use_container_width=True, help="Build Facility Allocation rules"):
+        st.session_state.module = "FACILITY"
+        st.rerun()
+
+with col_b:
+    active_b = "active" if st.session_state.module == "SHIPPING_FWD" else ""
+    st.markdown(f'<div class="nav-card {active_b}"><span class="nav-icon">🚚</span><span class="nav-label">Shipping</span><span class="nav-sub">Courier selection rules</span></div>', unsafe_allow_html=True)
+    if st.button("Shipping", key="nav_shipping", use_container_width=True, help="Build Shipping Provider Allocation rules"):
+        st.session_state.module = "SHIPPING_FWD"
+        st.rerun()
+
+with col_c:
+    active_c = "active" if st.session_state.module == "INVENTORY_CALC" else ""
+    st.markdown(f'<div class="nav-card {active_c}"><span class="nav-icon">📦</span><span class="nav-label">Inventory</span><span class="nav-sub">Stock sync formulas</span></div>', unsafe_allow_html=True)
+    if st.button("Inventory", key="nav_inventory", use_container_width=True, help="Build Inventory Sync formulas"):
+        st.session_state.module = "INVENTORY_CALC"
+        st.rerun()
+
+with col_d:
+    active_d = "active" if st.session_state.module == "TOOLS" else ""
+    st.markdown(f'<div class="nav-card {active_d}"><span class="nav-icon">🔧</span><span class="nav-label">Tools</span><span class="nav-sub">Validator · Audit · Decoder</span></div>', unsafe_allow_html=True)
+    if st.button("Tools", key="nav_tools", use_container_width=True, help="Rule Validator, Reverse Compiler, Audit, Anomaly Suggester"):
+        st.session_state.module = "TOOLS"
+        st.rerun()
+
+# Hide the nav buttons — only the cards are visible
+st.markdown("""
+<style>
+[data-testid="stHorizontalBlock"] .stButton > button {
+    opacity: 0 !important;
+    position: absolute !important;
+    top: 0 !important; left: 0 !important;
+    width: 100% !important; height: 100% !important;
+    cursor: pointer !important;
+    z-index: 10 !important;
+}
+</style>
+""", unsafe_allow_html=True)
+
+module = st.session_state.module
 
 st.write("")
 
@@ -2099,3 +2542,13 @@ elif module == "TOOLS":
                                 st.markdown(f"**What to do:** {a['Suggestion']}")
             except Exception as e:
                 st.error(f"Error reading file: {e}")
+
+# ── Footer ────────────────────────────────────────────────────────────
+st.markdown("""
+<div class="app-footer">
+  <div class="footer-credit">
+    Designed &amp; built by <span>Saqib Khan</span> &nbsp;·&nbsp; UniCommerce Technical Analytics
+  </div>
+  <div class="footer-version">Rule Engine &nbsp;·&nbsp; v8.0.0</div>
+</div>
+""", unsafe_allow_html=True)
