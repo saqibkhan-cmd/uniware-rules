@@ -155,8 +155,9 @@ html, body, [class*="css"] {
 
 /* Apply entrance animation to main content blocks */
 .element-container {
-    animation: fadeSlideIn 0.35s cubic-bezier(0.22,0.61,0.36,1) both;
-    animation-delay: 0.02s;
+    animation: fadeSlideIn 0.4s cubic-bezier(0.22,0.61,0.36,1) both;
+    animation-delay: 0.03s;
+    transition: opacity 0.3s ease;
 }
 
 /* ─────────────────────────────────────────────────
@@ -264,66 +265,82 @@ html, body, [class*="css"] {
    SECTION BOXES  — the D2 group containers
    ───────────────────────────────────────────────── */
 
-.section-box {
-    background: var(--white);
-    border: 1px solid var(--border-soft);
-    border-radius: 16px;
-    padding: 1.5rem 1.6rem 1rem;
-    margin-bottom: 1.4rem;
-    box-shadow: 0 2px 12px rgba(15,14,71,0.04), 0 0 0 0 transparent;
-    transition: box-shadow 0.25s ease;
-    animation: fadeSlideIn 0.4s cubic-bezier(0.22,0.61,0.36,1) both;
-    position: relative;
-}
+/* ── Page tint background ── */
+.stApp { background: #eeeef6 !important; }
+[data-testid="stAppViewContainer"] { background: #eeeef6 !important; }
 
+/* ── Section boxes ── */
+.section-box {
+    background: #ffffff;
+    border: 1px solid rgba(39,39,87,0.10);
+    border-radius: 16px;
+    padding: 1.6rem 1.8rem 1.2rem;
+    margin-bottom: 1.4rem;
+    box-shadow: 0 2px 16px rgba(15,14,71,0.05);
+    transition: box-shadow 0.3s cubic-bezier(0.22,0.61,0.36,1), transform 0.3s cubic-bezier(0.22,0.61,0.36,1);
+    animation: fadeSlideIn 0.5s cubic-bezier(0.22,0.61,0.36,1) both;
+    position: relative;
+    overflow: visible;
+}
 .section-box::before {
     content: '';
     position: absolute;
     top: 0; left: 0;
-    width: 3px; height: 100%;
-    background: linear-gradient(180deg, var(--navy-mid), var(--slate));
+    width: 4px; height: 100%;
+    background: linear-gradient(180deg, #0F0E47, #505081);
     border-radius: 16px 0 0 16px;
-    opacity: 0.6;
 }
-
 .section-box:hover {
-    box-shadow: 0 4px 20px rgba(15,14,71,0.08);
+    box-shadow: 0 8px 32px rgba(15,14,71,0.11);
+    transform: translateY(-2px);
 }
 
 .section-box-grey {
-    background: var(--surface);
-    border: 1px solid var(--border-soft);
+    background: #f5f5fb;
+    border: 1px solid rgba(39,39,87,0.08);
     border-radius: 16px;
-    padding: 1.5rem 1.6rem 1rem;
+    padding: 1.6rem 1.8rem 1.2rem;
     margin-bottom: 1.4rem;
-    box-shadow: 0 1px 6px rgba(15,14,71,0.03);
-    animation: fadeSlideIn 0.4s cubic-bezier(0.22,0.61,0.36,1) both;
+    box-shadow: 0 1px 8px rgba(15,14,71,0.03);
+    transition: box-shadow 0.3s ease;
+    animation: fadeSlideIn 0.5s cubic-bezier(0.22,0.61,0.36,1) both;
     position: relative;
 }
-
 .section-box-grey::before {
     content: '';
     position: absolute;
     top: 0; left: 0;
-    width: 3px; height: 100%;
-    background: linear-gradient(180deg, var(--slate), var(--lavender));
+    width: 4px; height: 100%;
+    background: linear-gradient(180deg, #505081, #8686AC);
     border-radius: 16px 0 0 16px;
-    opacity: 0.5;
 }
 
-/* ─────────────────────────────────────────────────
-   SECTION HEADINGS  h4
-   ───────────────────────────────────────────────── */
-
-h4 {
-    font-size: 0.67rem !important;
+/* ── Section heading — large & prominent ── */
+.sec-heading {
+    font-size: 1.05rem !important;
     font-weight: 800 !important;
-    letter-spacing: 0.14em !important;
+    letter-spacing: 0.03em !important;
+    color: #0F0E47 !important;
+    margin: 0 0 0.1rem 0.4rem !important;
+    padding: 0 !important;
+    display: block;
+    text-transform: uppercase;
+}
+.sec-line {
+    border: none !important;
+    border-top: 1.5px solid rgba(39,39,87,0.09) !important;
+    margin: 0.5rem 0 1.2rem 0 !important;
+}
+
+/* ── h4 fallback ── */
+h4 {
+    font-size: 1.0rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.03em !important;
     text-transform: uppercase !important;
-    color: var(--navy-mid) !important;
+    color: #0F0E47 !important;
     margin-bottom: 0 !important;
     margin-top: 0 !important;
-    opacity: 0.9 !important;
 }
 
 /* ─────────────────────────────────────────────────
@@ -504,10 +521,10 @@ input[type="text"]::placeholder, textarea::placeholder {
 }
 [data-testid="stCode"] pre {
     border-radius: 12px !important;
-    background: var(--navy) !important;
+    background: #f0f0f8 !important;
 }
 [data-testid="stCode"] code {
-    color: #c8d3f5 !important;
+    color: #0F0E47 !important;
     font-size: 0.8rem !important;
 }
 
@@ -1074,31 +1091,42 @@ def country_selectbox(key_prefix, label="Country Code"):
 # =====================================================================
 
 def render_facility_compiler():
-    st.caption("Fill in only the conditions your rule needs. Leave everything else blank — every filled condition is combined with AND.")
+    st.caption("Fill in only the conditions your rule needs. Every filled condition is joined with AND.")
     st.write("")
 
-    # ── ORDER DETAILS ─────────────────────────────────────────────
+    # ═══════════════════════════════════════
+    # ORDER
+    # ═══════════════════════════════════════
     st.markdown('<div class="section-box">', unsafe_allow_html=True)
-    st.markdown("#### 📦 Order Details")
-    st.caption("Channel, payment, inventory check, and third party shipping.")
-    st.divider()
+    st.markdown('<p class="sec-heading">📦 Order</p>', unsafe_allow_html=True)
+    st.markdown('<hr class="sec-line">', unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
     with col1:
         st.markdown("**Channel Code**")
         fac_use_channel = st.checkbox("Apply Channel Code Filter", key="fac_use_channel",
-            help="Single value → `== 'SHOPIFY'`\nMultiple (comma-separated) → `equalsAny('SHOPIFY','FLIPKART')`\n\nEnable case-insensitive if casing varies in your Uniware tenant.")
-        fac_channel_val = ""
-        fac_channel_icase = False
-        fac_channel_strip = False
+            help="The sales channel this order came from — e.g. SHOPIFY, FLIPKART, AMAZON_IN.\n\nSingle → matches one channel exactly.\nMultiple (comma-separated) → matches any of them.\nCase-insensitive option → use if casing varies in your tenant.")
+        fac_channel_val = ""; fac_channel_icase = False; fac_channel_strip = False
         if fac_use_channel:
             fac_channel_val = st.text_input("Channel Code(s)", key="fac_channel_val",
                 placeholder="Single: SHOPIFY  |  Multiple: FLIPKART, AMAZON_IN")
             fac_channel_icase = st.checkbox("Case-Insensitive Match", key="fac_channel_icase",
-                help="Uses `.equalsIgnoreCase()` for single or `equalsIgnoreCaseAny()` for multiple.")
-            fac_channel_strip = st.checkbox("Strip Spaces (.replace(\" \", \"\"))", key="fac_channel_strip",
-                help="Removes all spaces from the channel code before comparing. Use if the source may contain accidental spaces.")
+                help="Tick this if the channel code sometimes comes in different casing — e.g. 'Shopify' vs 'SHOPIFY'.")
+            fac_channel_strip = st.checkbox("Strip Spaces", key="fac_channel_strip",
+                help="Removes spaces from the channel code before matching. Use if your channel code sometimes has accidental spaces.")
+
     with col2:
+        st.markdown("**Payment Method**")
+        fac_use_payment = st.checkbox("Apply Payment Method Filter", key="fac_use_payment",
+            help="Filter by how the order was paid.\n\nPREPAID — customer paid online (card, UPI, net banking).\nCOD — cash on delivery. Useful for routing COD orders to facilities with cash-handling setup.")
+        fac_payment_val = ""
+        if fac_use_payment:
+            fac_payment_val = st.selectbox("Payment Method", ["PREPAID", "COD"], key="fac_payment_val",
+                help="PREPAID = online/card/UPI | COD = cash on delivery")
+
+    st.write("")
+    col3, col4 = st.columns(2)
+    with col3:
         st.markdown("**Inventory Criteria**")
         fac_inv = st.selectbox("Inventory Criteria", [
             "NONE","hasShortTermInventory","hasCompleteShortTermInventory","hasCompleteLongTermInventory",
@@ -1118,357 +1146,199 @@ def render_facility_compiler():
                 "hasAllocationWithinMaxOrderCapacity": "Has Allocation Within Max Order Capacity",
             }.get(x, x), key="fac_inv", label_visibility="collapsed",
             help=(
-                "NO FILTER — Don't check stock at all.\n\n"
-                "SHORT TERM — At least 1 item has stock ready to ship now.\n\n"
-                "COMPLETE SHORT TERM ⭐ — ALL items ready to ship. Most commonly used.\n\n"
-                "COMPLETE MID TERM — ALL items have stock arriving soon.\n\n"
-                "COMPLETE LONG TERM — ALL items have reserved/planned stock.\n\n"
-                "COMPLETE INVENTORY — ALL items have stock in any state.\n\n"
-                "FULFILLABLE — ALL items have non-blocked, pickable stock.\n\n"
-                "HAS INVENTORY — Some stock exists. Use as last-resort fallback.\n\n"
-                "LIVE INVENTORY — Stock is live and synced to channels.\n\n"
-                "LONG TERM — At least 1 item has reserve stock.\n\n"
-                "MAX ORDER CAPACITY — Facility hasn't hit its daily order cap."
+                "Checks stock availability before allocating the order to this facility.\n\n"
+                "NO FILTER — No stock check. Order goes here regardless.\n\n"
+                "SHORT TERM — At least 1 item is in stock and ready to ship now.\n\n"
+                "COMPLETE SHORT TERM ⭐ — Every item in the order is in stock and ready to ship now. Most commonly used for day-to-day routing.\n\n"
+                "COMPLETE MID TERM — Every item will be available soon (stock arriving in the next few days).\n\n"
+                "COMPLETE LONG TERM — Every item has reserved/planned stock (not available now, available later).\n\n"
+                "COMPLETE INVENTORY — Every item has stock in any state — now, soon, or later.\n\n"
+                "FULFILLABLE — Every item has stock that is clean, sellable, not blocked or on hold.\n\n"
+                "HAS INVENTORY — Some stock exists. Very loose check — use only as a last-resort fallback.\n\n"
+                "LIVE INVENTORY — Stock is live and actively synced to channels. ⚠️ Common typo: 'hasliveInventory' (small l) — correct is 'hasLiveInventory' (capital L).\n\n"
+                "LONG TERM — At least 1 item has reserve/long-term stock.\n\n"
+                "MAX ORDER CAPACITY — Facility has not hit its daily order processing limit."
             )
         )
 
-
+    with col4:
+        st.markdown("**Third Party Shipping**")
+        fac_use_tps = st.checkbox("Apply Third Party Shipping Filter", key="fac_use_tps",
+            help="Third Party Shipping means the customer or channel has arranged their own courier — e.g. Shopify-managed shipping — instead of going through Uniware's standard courier allocation.\n\nUse this to route or exclude such orders from specific facilities.")
+        fac_tps_value = "true"
+        if fac_use_tps:
+            fac_tps_value = st.radio("Condition", ["true", "false"],
+                format_func=lambda x: {
+                    "true":  "✅ Order IS using third-party shipping",
+                    "false": "🚫 Order is NOT using third-party shipping"
+                }[x], horizontal=True, key="fac_tps_value",
+                help="True: order is being shipped by a third-party courier the customer arranged.\nFalse: order goes through Uniware's normal courier allocation flow.")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # ── DELIVERY LOCATION ─────────────────────────────────────────
+    # ═══════════════════════════════════════
+    # LOCATION
+    # ═══════════════════════════════════════
     st.markdown('<div class="section-box">', unsafe_allow_html=True)
-    st.markdown("#### 📍 Delivery Location")
-    st.caption("State, pincode, city, and country.")
-    st.divider()
+    st.markdown('<p class="sec-heading">📍 Delivery Location</p>', unsafe_allow_html=True)
+    st.markdown('<hr class="sec-line">', unsafe_allow_html=True)
 
-    col3, col4 = st.columns(2)
-    with col3:
+    col5, col6 = st.columns(2)
+    with col5:
         st.markdown("**State Code**")
         fac_use_state = st.checkbox("Apply State Code Filter", key="fac_use_state",
-            help="Select a country to load its states, then pick one or more.\n\nSingle → `== 'MH'` | Multiple → `equalsAny('MH','GJ')`")
+            help="Restrict this rule to orders going to specific states.\n\nSelect the country first to load its state list, then pick one or more states.")
         fac_state_val = ""
         if fac_use_state:
             fac_sc = st.selectbox("Country (to load states)", options=ALL_COUNTRY_OPTIONS,
-                format_func=lambda x: "— Select country —" if x == "" else COUNTRY_OPTIONS[x], key="fac_state_cc",
-                help="Select the country whose state list you want to use.")
+                format_func=lambda x: "— Select country —" if x == "" else COUNTRY_OPTIONS[x], key="fac_state_cc")
             fac_sel_states = []
             if fac_sc:
                 fac_sel_states = st.multiselect("State(s)", options=get_state_options(fac_sc), key="fac_state_multi",
                     help="Type to search. Select one or multiple states.")
             fac_state_val = ",".join(extract_state_codes(fac_sel_states))
-    with col4:
+
+    with col6:
         st.markdown("**Pincode**")
         fac_use_pincode = st.checkbox("Apply Pincode Filter", key="fac_use_pincode",
-            help="What it is: Restricts this rule to orders being delivered to specific pincodes.\n\nHow it helps: Useful for hyper-local routing — e.g. send orders within certain pincodes to a nearby dark store or quick-commerce facility.\n\nYou can type pincodes manually or upload a file if you have many.")
-        fac_pincode_val = ""
-        fac_pincode_rules = []
+            help="Restrict this rule to orders going to specific delivery pincodes.\n\nUseful for hyper-local routing — e.g. send orders in certain pincodes to a nearby dark store.\n\nA single rule handles up to ~40 pincodes reliably. Use the file upload for larger lists.")
+        fac_pincode_val = ""; fac_pincode_rules = []
         if fac_use_pincode:
-            fac_pin_mode = st.radio("How do you want to enter pincodes?",
-                ["Type manually", "Upload file (for large lists)"],
-                horizontal=True, key="fac_pin_mode",
-                help="Type manually: best for up to ~40 pincodes\nUpload file: for larger lists — the tool will automatically split them into multiple rules of 40 pincodes each, since a single rule can only handle around 40 pincodes reliably.")
+            fac_pin_mode = st.radio("Entry method", ["Type manually", "Upload file (large lists)"],
+                horizontal=True, key="fac_pin_mode")
             if fac_pin_mode == "Type manually":
                 fac_pincode_val = st.text_area("Pincode(s)", key="fac_pincode_val",
-                    placeholder="Single: 560001  |  Multiple: 560001, 560002, 400001", height=80,
-                    help="Enter one pincode or many separated by commas. All must be 6 digits.")
+                    placeholder="Single: 560001  |  Multiple: 560001, 560002, 400001", height=80)
             else:
-                with st.expander("📄 How to prepare your CSV / TXT file", expanded=False):
-                    st.markdown(
-                        "**Option 1 — One pincode per line (recommended):**\n"
-                        "```\n560001\n560002\n560003\n400001\n```\n\n"
-                        "**Option 2 — Comma separated:**\n"
-                        "```\n560001, 560002, 560003, 400001\n```\n\n"
-                        "**Rules:**\n"
-                        "- Every pincode must be exactly **6 digits**\n"
-                        "- No headers needed — just the pincodes\n"
-                        "- Invalid values (letters, 5-digit, 7-digit) are skipped automatically and shown as a warning\n"
-                        "- The tool splits them into groups of **40 pincodes per rule** automatically\n"
-                        "- Save as `.csv` or `.txt` before uploading"
-                    )
+                with st.expander("📄 How to prepare your file", expanded=False):
+                    st.markdown("One pincode per line, or comma-separated. Must be exactly 6 digits. No headers needed.")
                     import io as _io
-                    fac_pin_template = _io.StringIO()
-                    fac_pin_template.write("pincode\n")
-                    for p in ["560001","560002","560003","400001","400002","110001","110002"]:
-                        fac_pin_template.write(f"{p}\n")
-                    st.download_button(
-                        label="⬇️ Download Pincode Template CSV",
-                        data=fac_pin_template.getvalue(),
-                        file_name="pincode_template.csv",
-                        mime="text/csv",
-                        key="fac_pin_template_dl",
-                        help="Download this template, replace the sample pincodes with your own, and upload it."
-                    )
-                    st.caption("💡 Tip: you can also just use a plain .txt file with one pincode per line — no headers needed.")
-                st.caption("Upload a CSV or TXT file — one pincode per line or comma-separated.")
-                pin_file = st.file_uploader("Upload pincode file", type=["csv","txt"], key="fac_pin_file",
-                    help="One pincode per line or comma-separated. Invalid entries are skipped. Rules are auto-split into groups of 40.")
+                    _t = _io.StringIO(); _t.write("pincode\n")
+                    for p in ["560001","560002","560003","400001","400002","110001","110002"]: _t.write(f"{p}\n")
+                    st.download_button("⬇️ Download Template", data=_t.getvalue(), file_name="pincode_template.csv", mime="text/csv", key="fac_pin_template_dl")
+                pin_file = st.file_uploader("Upload pincode file", type=["csv","txt"], key="fac_pin_file")
                 if pin_file:
                     raw = pin_file.read().decode("utf-8", errors="ignore")
                     all_pins = [p.strip() for p in re.split(r'[\n,]+', raw) if re.match(r'^\d{6}$', p.strip())]
                     bad_pins = [p.strip() for p in re.split(r'[\n,]+', raw) if p.strip() and not re.match(r'^\d{6}$', p.strip())]
-                    if bad_pins:
-                        st.warning(f"⚠️ Skipped {len(bad_pins)} invalid value(s): {', '.join(bad_pins[:10])}{'...' if len(bad_pins)>10 else ''}")
+                    if bad_pins: st.warning(f"⚠️ Skipped {len(bad_pins)} invalid: {', '.join(bad_pins[:10])}")
                     if all_pins:
-                        CHUNK = 40
-                        chunks = [all_pins[i:i+CHUNK] for i in range(0, len(all_pins), CHUNK)]
+                        chunks = [all_pins[i:i+40] for i in range(0, len(all_pins), 40)]
                         fac_pincode_rules = chunks
-                        st.success(f"✅ Loaded {len(all_pins)} valid pincodes — will generate {len(chunks)} rule(s) of up to {CHUNK} pincodes each.")
+                        st.success(f"✅ {len(all_pins)} pincodes → {len(chunks)} rule(s)")
                         fac_pincode_val = ",".join(all_pins)
 
-
     st.write("")
-    col5, col6 = st.columns(2)
-    with col5:
+    col7, col8 = st.columns(2)
+    with col7:
         fac_use_city, fac_city_val = city_multiselect("fac")
-    with col6:
-        st.markdown("**Payment Method**")
-        fac_use_payment = st.checkbox("Apply Payment Method Filter", key="fac_use_payment",
-            help="Restricts to COD or Prepaid orders.\n\nGenerates: `#saleOrder.paymentMethod.code == 'COD'`\n\nUseful for routing COD orders to facilities with cash-handling capability.")
-        fac_payment_val = ""
-        if fac_use_payment:
-            fac_payment_val = st.selectbox("Payment Method", ["PREPAID","COD"], key="fac_payment_val",
-                help="PREPAID = online/card/UPI paid | COD = cash on delivery")
+    with col8:
+        fac_use_country, fac_country_val, fac_country_mode = country_selectbox("fac")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
-    # ── PRODUCT ───────────────────────────────────────────────────
+    # ═══════════════════════════════════════
+    # PRODUCT
+    # ═══════════════════════════════════════
     st.markdown('<div class="section-box">', unsafe_allow_html=True)
-    st.markdown("#### 🏷️ Product")
-    st.caption("SKU, tags, brand, bundle SKU, and destination country.")
-    st.divider()
+    st.markdown('<p class="sec-heading">🏷️ Product</p>', unsafe_allow_html=True)
+    st.markdown('<hr class="sec-line">', unsafe_allow_html=True)
 
-    col7, col8 = st.columns(2)
-    with col7:
-        fac_use_country, fac_country_val, fac_country_mode = country_selectbox("fac")
-    with col8:
-        st.markdown("**SKU Code (Item Type SKU)**")
+    col9, col10 = st.columns(2)
+    with col9:
+        st.markdown("**SKU Code**")
         fac_use_sku = st.checkbox("Apply SKU Code Filter", key="fac_use_sku",
-            help=(
-                "What it is: Filters based on the SKU code of the product's item type in Uniware.\n\n"
-                "How it helps: Route orders containing specific products to a particular facility.\n\n"
-                "Single SKU → checks if at least one item in the order has that SKU\n"
-                "Multiple SKUs → same check across all entered SKUs\n\n"
-                "Uses `itemType.skuCode` — the correct field for SKU matching in Uniware allocation rules.\n\n"
-                "For bundle/combo products: enter the component SKU codes — "
-                "Uniware exposes component items as individual order items with their own `itemType.skuCode`."
-            )
-        )
+            help="Filter by the product's SKU code from the Uniware item master.\n\nChecks if at least one item in the order matches the given SKU(s). Uses itemType.skuCode — the correct field confirmed from live production rules.")
         fac_sku_val = ""
         if fac_use_sku:
             fac_sku_val = st.text_area("SKU Code(s)", key="fac_sku_val",
-                placeholder="Single: SKU001  |  Multiple: SKU001, SKU002, SKU003", height=80,
-                help="Enter the exact SKU code(s) as configured in the Uniware item master. Case-sensitive.")
-
-    st.write("")
-    col_fac_bundle1, col_fac_bundle2 = st.columns(2)
-    with col_fac_bundle1:
-        st.markdown("**Bundle SKU Code**")
-        fac_use_bundle = st.checkbox("Apply Bundle SKU Code Filter", key="fac_use_bundle",
-            help=(
-                "What it is: Filters orders that contain a specific bundle/combo product.\n\n"
-                "How it helps: Route orders containing a specific bundle SKU to a particular facility.\n\n"
-                "Uses `bundleSkuCode` — confirmed from 21 live enabled facility rules.\n\n"
-                "Different from regular SKU (itemType.skuCode) — bundle SKU is the code of the parent bundle "
-                "and is only present on items that are part of a bundle. "
-                "A null check is always applied first to avoid errors on non-bundle items."
-            )
-        )
-        fac_bundle_val = ""
-        fac_bundle_notnull_only = False
-        if fac_use_bundle:
-            fac_bundle_notnull_only = st.checkbox("Just check if any bundle SKU exists (no specific code)", key="fac_bundle_notnull_only",
-                help="Matches any order that has at least one bundle item — regardless of which bundle SKU it is.")
-            if not fac_bundle_notnull_only:
-                fac_bundle_val = st.text_area("Bundle SKU Code(s)", key="fac_bundle_val",
-                    placeholder="Single: BUNDLE001  |  Multiple: BUNDLE001, BUNDLE002", height=80,
-                    help="Enter exact bundle SKU code(s) as in Uniware item master.")
-    with col_fac_bundle2:
-        st.write("")
-
-    st.write("")
-    col9, col10 = st.columns(2)
-    with col9:
-        st.markdown("**Item Tag**")
-        fac_use_tag = st.checkbox("Apply Item Tag Filter", key="fac_use_tag",
-            help=(
-                "What it is: Tags are labels you attach to products in the Uniware item master to group them — "
-                "e.g. 'Flooring', 'Board', 'Sample', 'Fragile'.\n\n"
-                "How it helps: Route orders based on what type of product is in them — "
-                "e.g. all Flooring orders go to the Flooring facility, Board orders go to Board facility.\n\n"
-                "Two levels available:\n"
-                "• Order level — checks if ANY item in the whole order has this tag. "
-                "Entire order goes to one facility. Does NOT split mixed-tag orders.\n"
-                "• SKU level (item level) — checks each item individually. "
-                "Enables splitting — Flooring items go to Flooring facility, "
-                "Board items go to Board facility, even within the same order.\n\n"
-                "Use SKU level if you want mixed-tag orders to split across facilities."
-            )
-        )
-        fac_tag_val = ""
-        fac_tag_level = "order"
-        fac_tag_mode = "single"
-        if fac_use_tag:
-            fac_tag_level = st.radio(
-                "Tag is applied at:",
-                ["order", "sku"],
-                format_func=lambda x: {
-                    "order": "📦 Order level — route the whole order based on any item's tag",
-                    "sku":   "🔖 SKU level — route each item individually by its own tag (enables splitting)"
-                }[x],
-                key="fac_tag_level",
-                horizontal=True,
-                help=(
-                    "📦 Order level: if ANY item in the order has this tag, the ENTIRE order goes to this facility.\n"
-                    "Use when all items in an order always share the same tag.\n\n"
-                    "🔖 SKU level: each item is checked individually. Only items with this tag go to this facility.\n"
-                    "Use when a single order can have items with DIFFERENT tags (e.g. Flooring + Board) "
-                    "and you want them to split into separate facilities.\n\n"
-                    "⚠️ For SKU-level splitting to work, make sure 'Allow Splitting' is enabled "
-                    "in the facility allocation settings for this tenant."
-                )
-            )
-
-            if fac_tag_level == "order":
-                st.caption("📦 Order level: the whole order goes to this facility if at least one item carries this tag.")
-                fac_tag_val = st.text_input(
-                    "Tag Value(s)",
-                    key="fac_tag_val",
-                    placeholder="Single: Flooring  |  Multiple (generates one rule each): Flooring, Board, Sample",
-                    help="Enter one tag for one rule, or multiple comma-separated tags to generate one rule per tag automatically."
-                )
-                fac_tag_mode = "single" if len([t.strip() for t in fac_tag_val.split(",") if t.strip()]) <= 1 else "multi"
-
-            else:
-                st.caption(
-                    "🔖 SKU level: each item is evaluated individually — enables order splitting across facilities.\n"
-                    "Enter multiple tags to generate one rule per tag (e.g. Flooring, Board, Sample → 3 rules)."
-                )
-                fac_tag_val = st.text_input(
-                    "Tag Value(s) — comma-separated for multiple rules",
-                    key="fac_tag_val",
-                    placeholder="Single: Flooring  |  Multiple: Flooring, Board, Sample",
-                    help=(
-                        "Single tag → generates 1 rule using #saleOrderItem.itemType.hasAnyTag('Flooring')\n"
-                        "Multiple tags → generates one complete rule per tag, all other conditions (channel, pincode etc.) "
-                        "are identical across all rules. Copy each rule separately into Uniware."
-                    )
-                )
-                fac_tag_mode = "single" if len([t.strip() for t in fac_tag_val.split(",") if t.strip()]) <= 1 else "multi"
-
-                if fac_tag_mode == "multi":
-                    tag_list_preview = [t.strip() for t in fac_tag_val.split(",") if t.strip()]
-                    st.info(
-                        f"✅ {len(tag_list_preview)} tags entered — will generate **{len(tag_list_preview)} rules** "
-                        f"({', '.join(tag_list_preview)}). "
-                        "Each rule routes items with that specific tag to this facility."
-                    )
+                placeholder="Single: SKU001  |  Multiple: SKU001, SKU002, SKU003", height=80)
 
     with col10:
-        st.markdown("**Brand (contains match)**")
-        fac_use_brand = st.checkbox("Apply Brand Filter", key="fac_use_brand",
-            help="Checks if any order item belongs to a brand whose name contains the given text.\n\nGenerates: `#saleOrder.saleOrderItems.^[itemType.brand.contains('BRAND')] != null`\n\nPartial/contains match — not exact.")
-        fac_brand_val = ""
-        if fac_use_brand:
-            fac_brand_val = st.text_input("Brand Name", key="fac_brand_val", placeholder="e.g. Trend Arrest")
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    # ── ADVANCED ──────────────────────────────────────────────────
-    st.markdown('<div class="section-box-grey">', unsafe_allow_html=True)
-    st.markdown("#### ⚙️ Advanced")
-    st.caption("Custom fields and item-level conditions. Use when standard fields aren't enough.")
-    st.divider()
-
-    col11a, col12a = st.columns(2)
-    with col11a:
-        st.markdown("**Third Party Shipping**")
-        fac_use_tps = st.checkbox("Apply Third Party Shipping Filter", key="fac_use_tps",
-            help=(
-                "What it is: Third Party Shipping means the customer has chosen their own courier "
-                "or the order is being shipped via a courier arranged outside of Uniware's standard flow "
-                "(e.g. Shopify-managed shipping).\n\n"
-                "How it helps: Lets you route third-party shipping orders to a specific facility, "
-                "or exclude them from certain facilities entirely.\n\n"
-                "Confirmed valid field from live production rules — used as:\n"
-                "• Is third party shipping → `#saleOrder.thirdPartyShipping`\n"
-                "• Is NOT third party shipping → `!#saleOrder.thirdPartyShipping`"
-            )
-        )
-        fac_tps_value = "true"
-        if fac_use_tps:
-            fac_tps_value = st.radio(
-                "Condition",
-                ["true", "false"],
-                format_func=lambda x: {
-                    "true":  "✅ Is Third Party Shipping — order uses a third-party / self-arranged courier",
-                    "false": "🚫 Is NOT Third Party Shipping — order uses standard Uniware courier flow"
-                }[x],
-                horizontal=True,
-                key="fac_tps_value",
-                help=(
-                    "True: matches orders where the customer or channel has arranged their own shipping\n"
-                    "False: matches orders going through the normal courier allocation in Uniware\n\n"
-                    "Most common use: route third-party shipping orders to a dedicated facility "
-                    "or exclude them from facilities that only handle standard courier orders."
-                )
-            )
-    with col12a:
-        st.write("")
+        st.markdown("**Bundle SKU Code**")
+        fac_use_bundle = st.checkbox("Apply Bundle SKU Code Filter", key="fac_use_bundle",
+            help="Filter by the bundle/combo product's SKU code.\n\nDifferent from regular SKU — bundle SKU is the parent code and is only present on items that are part of a bundle. A null check is always applied first.")
+        fac_bundle_val = ""; fac_bundle_notnull_only = False
+        if fac_use_bundle:
+            fac_bundle_notnull_only = st.checkbox("Just check if any bundle exists (no specific code)", key="fac_bundle_notnull_only")
+            if not fac_bundle_notnull_only:
+                fac_bundle_val = st.text_area("Bundle SKU Code(s)", key="fac_bundle_val",
+                    placeholder="Single: BUNDLE001  |  Multiple: BUNDLE001, BUNDLE002", height=80)
 
     st.write("")
     col11, col12 = st.columns(2)
     with col11:
-        st.markdown("**Custom Field (Order Level)**")
-        fac_use_cf = st.checkbox("Apply Order-Level Custom Field Filter", key="fac_use_cf",
-            help="What it is: Extra data fields that come along with an order from your sales channel (like Shopify tags, delivery type, or on-hold flags).\n\nHow it helps: Lets you route orders based on special information that doesn't have a standard field in Uniware — for example, routing all 'express' tagged orders to a specific facility.\n\nThe field name must match exactly what is set up in Uniware for your tenant.")
-        fac_cf_field = ""
-        fac_cf_match = "contains"
-        fac_cf_value = ""
-        fac_cf_strip = False
-        if fac_use_cf:
-            fac_cf_field = st.text_input("Custom Field Name", key="fac_cf_field",
-                placeholder="e.g. Tags  or  Omni  or  OnHold")
-            fac_cf_match = st.selectbox("How should the field be matched?",
-                ["contains","equalsIgnoreCase","not_null"],
-                format_func=lambda x: {"contains":"🔍 Contains — the field has this word somewhere in it","equalsIgnoreCase":"✅ Exactly Equals — the field is precisely this value","not_null":"📌 Just Exists — any value in the field is enough"}[x],
-                key="fac_cf_match",
-                help="Contains: best for tags — e.g. Tags field = 'express, prepaid' and you check for 'express'\nExactly Equals: when the field must be one specific value, e.g. Omni field = 'false'\nJust Exists: when you only care the field is filled in, not what it says")
-            if fac_cf_match != "not_null":
-                fac_cf_value = st.text_input("Value to match against", key="fac_cf_value",
-                    placeholder="e.g. express  or  employee_delight60  or  false")
-            if fac_cf_match in ("contains","equalsIgnoreCase"):
-                fac_cf_strip = st.checkbox("Ignore spaces in the field value", key="fac_cf_strip",
-                    help="Removes all spaces from the field value before comparing. Useful when the channel sometimes sends values with accidental spaces — e.g. 'express delivery' vs 'expressdelivery'.")
+        st.markdown("**Item Tag**")
+        fac_use_tag = st.checkbox("Apply Item Tag Filter", key="fac_use_tag",
+            help="Tags are labels attached to products in the Uniware item master — e.g. 'Flooring', 'Fragile', 'Rudra'.\n\nOrder level: if ANY item has this tag, the whole order goes to this facility.\nSKU level: each item is checked individually — enables splitting mixed-tag orders across multiple facilities.\n\n⚠️ SKU-level splitting requires 'Allow Splitting' to be enabled in facility settings.")
+        fac_tag_val = ""; fac_tag_level = "order"; fac_tag_mode = "single"
+        if fac_use_tag:
+            fac_tag_level = st.radio("Tag is applied at:", ["order", "sku"],
+                format_func=lambda x: {"order": "📦 Order level", "sku": "🔖 SKU level (enables splitting)"}[x],
+                key="fac_tag_level", horizontal=True)
+            if fac_tag_level == "order":
+                fac_tag_val = st.text_input("Tag Value(s)", key="fac_tag_val",
+                    placeholder="Single: Flooring  |  Multiple: Flooring, Board, Sample")
+                fac_tag_mode = "single" if len([t.strip() for t in fac_tag_val.split(",") if t.strip()]) <= 1 else "multi"
+            else:
+                fac_tag_val = st.text_input("Tag Value(s) — one rule per tag", key="fac_tag_val",
+                    placeholder="Single: Flooring  |  Multiple: Flooring, Board, Sample")
+                fac_tag_mode = "single" if len([t.strip() for t in fac_tag_val.split(",") if t.strip()]) <= 1 else "multi"
+                if fac_tag_mode == "multi":
+                    tag_list_preview = [t.strip() for t in fac_tag_val.split(",") if t.strip()]
+                    st.info(f"✅ {len(tag_list_preview)} tags — will generate {len(tag_list_preview)} rules.")
 
     with col12:
-        st.markdown("**Custom Field (Order Item Level)**")
+        st.markdown("**Brand**")
+        fac_use_brand = st.checkbox("Apply Brand Filter", key="fac_use_brand",
+            help="Filter by brand name — partial/contains match.\n\nChecks if any item in the order belongs to a brand whose name contains the text you enter.")
+        fac_brand_val = ""
+        if fac_use_brand:
+            fac_brand_val = st.text_input("Brand Name (contains match)", key="fac_brand_val", placeholder="e.g. Trend Arrest")
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+    # ═══════════════════════════════════════
+    # ADVANCED
+    # ═══════════════════════════════════════
+    st.markdown('<div class="section-box-grey">', unsafe_allow_html=True)
+    st.markdown('<p class="sec-heading">⚙️ Advanced</p>', unsafe_allow_html=True)
+    st.markdown('<hr class="sec-line">', unsafe_allow_html=True)
+
+    col13, col14 = st.columns(2)
+    with col13:
+        st.markdown("**Custom Field — Order Level**")
+        fac_use_cf = st.checkbox("Apply Order-Level Custom Field Filter", key="fac_use_cf",
+            help="Extra fields that come with an order from your sales channel — e.g. Shopify tags, delivery flags, on-hold markers.\n\nThe field name must match exactly what is configured in Uniware for your tenant (case-sensitive).")
+        fac_cf_field = ""; fac_cf_match = "contains"; fac_cf_value = ""; fac_cf_strip = False
+        if fac_use_cf:
+            fac_cf_field = st.text_input("Custom Field Name", key="fac_cf_field", placeholder="e.g. Tags  or  Omni  or  OnHold")
+            fac_cf_match = st.selectbox("Match type", ["contains","equalsIgnoreCase","not_null"],
+                format_func=lambda x: {"contains":"🔍 Contains — field has this word somewhere","equalsIgnoreCase":"✅ Exactly Equals — field is precisely this value","not_null":"📌 Just Exists — any value is enough"}[x],
+                key="fac_cf_match")
+            if fac_cf_match != "not_null":
+                fac_cf_value = st.text_input("Value to match", key="fac_cf_value", placeholder="e.g. express  or  false")
+            if fac_cf_match in ("contains","equalsIgnoreCase"):
+                fac_cf_strip = st.checkbox("Ignore spaces in field value", key="fac_cf_strip")
+
+    with col14:
+        st.markdown("**Custom Field — Order Item Level**")
         fac_use_soi_cf = st.checkbox("Apply Order Item-Level Custom Field Filter", key="fac_use_soi_cf",
-            help="What it is: Same as the order-level custom field above, but applied to each individual item in the order (SOI = Sale Order Item) rather than the whole order.\n\nHow it helps: Lets you route orders based on properties attached to specific products — for example, a product that has a custom 'bonkers3' tag set on it at the item level.\n\nImportant: For this to work, you must also add a custom field mapping in the Channel Configuration (see the note that appears below when you enable this).")
-        fac_soi_cf_field = ""
-        fac_soi_cf_value = ""
+            help="Same as order-level custom field but applied to each individual product in the order.\n\nThis uses properties passed at the item level from the channel.\n\n⚠️ Requires an additional mapping in the Channel Configuration — see the note that appears below when you enable this.")
+        fac_soi_cf_field = ""; fac_soi_cf_value = ""
         if fac_use_soi_cf:
             fac_soi_cf_field = st.text_input("Custom Field Name (item level)", key="fac_soi_cf_field",
                 placeholder="e.g. custom  or  product_type  or  delivery_tag")
-            fac_soi_cf_value = st.text_input("Value to match against (exact match)", key="fac_soi_cf_value",
+            fac_soi_cf_value = st.text_input("Value to match (exact)", key="fac_soi_cf_value",
                 placeholder="e.g. bonkers3  or  express  or  fragile")
             st.info(
                 "⚙️ **Channel Configuration Required**\n\n"
-                "For item-level custom field rules to work, you must add the following mapping in the channel's "
-                "**Additional Custom Field Mapping** section in Uniware channel configuration. "
-                f"Replace `custom` in the JSON below with your actual field name (`{fac_soi_cf_field.strip() or 'your_field_name'}`):\n\n"
-                "```json\n"
-                '[\n'
-                '  {\n'
+                "Add the following in the channel's **Additional Custom Field Mapping** in Uniware. "
+                f"Replace `custom` with your field name (`{fac_soi_cf_field.strip() or 'your_field_name'}`):\n\n"
+                "```json\n[\n  {\n"
                 f'    "{fac_soi_cf_field.strip() or "custom"}": "#{{#saleOrderItem?.get(\'properties\')!=null ? ( #saleOrderItem.get(\'properties\').^[ get(\'name\')!=null and get(\'name\').getAsString().equals(\'{fac_soi_cf_field.strip() or "custom"}\') ] != null ?#saleOrderItem.get(\'properties\').^[ get(\'name\')!=null and get(\'name\').getAsString().equals(\'{fac_soi_cf_field.strip() or "custom"}\')].get(\'value\').getAsString() : \'\') : \'\'}}"\n'
-                '  }\n'
-                ']\n'
-                "```\n\n"
-                f"This mapping tells Uniware to read the item property named `{fac_soi_cf_field.strip() or 'custom'}` from the channel and make it available as a custom field on `itemType`.\n\n"
-                "**Field path used in rule:** `getCustomFieldValue(#saleOrderItem.itemType, 'field')` — confirmed from live production rules."
+                "  }\n]\n```"
             )
-
-    st.write("")
 
     st.markdown('</div>', unsafe_allow_html=True)
     st.write("")
@@ -1480,9 +1350,8 @@ def render_facility_compiler():
         if fac_use_pincode and fac_pincode_val.strip():
             validate_inputs(warnings_list, "Pincode", fac_pincode_val, "pincode")
         if warnings_list:
-            st.warning("⚠️ **Please review before using this rule:**")
+            st.warning("⚠️ Please review before using this rule:")
             for w in warnings_list: st.markdown(f"- {w}")
-            st.write("")
 
         parts = []
         if fac_use_channel and fac_channel_val.strip():
@@ -1490,6 +1359,10 @@ def render_facility_compiler():
             if e: parts.append(e)
         if fac_inv != "NONE":
             parts.append(f"#allocationCriteria.{fac_inv}()")
+        if fac_use_payment and fac_payment_val:
+            parts.append(f"#saleOrder.paymentMethod.code == '{fac_payment_val}'")
+        if fac_use_tps:
+            parts.append("#saleOrder.thirdPartyShipping" if fac_tps_value == "true" else "!#saleOrder.thirdPartyShipping")
         if fac_use_state and fac_state_val.strip():
             e = format_multi_value_condition(fac_state_val, "#saleOrderItem.shippingAddress.stateCode")
             if e: parts.append(e)
@@ -1499,8 +1372,6 @@ def render_facility_compiler():
         if fac_use_city and fac_city_val.strip():
             e = format_multi_value_condition(fac_city_val, "#saleOrderItem.shippingAddress.city")
             if e: parts.append(e)
-        if fac_use_payment and fac_payment_val:
-            parts.append(f"#saleOrder.paymentMethod.code == '{fac_payment_val}'")
         if fac_use_country and fac_country_val.strip():
             e = format_not_equals_condition(fac_country_val, "#saleOrderItem.shippingAddress.countryCode") if fac_country_mode == "not_equals" else format_multi_value_condition(fac_country_val, "#saleOrderItem.shippingAddress.countryCode")
             if e: parts.append(e)
@@ -1508,11 +1379,7 @@ def render_facility_compiler():
             sku_items = csv_items(fac_sku_val)
             if sku_items:
                 quoted = ", ".join(f"'{v}'" for v in sku_items)
-                parts.append(
-                    f"#saleOrder.saleOrderItems.?["
-                    f"T(com.unifier.core.utils.StringUtils).equalsAny(itemType.skuCode, {quoted})"
-                    f"].size() > 0"
-                )
+                parts.append(f"#saleOrder.saleOrderItems.?[T(com.unifier.core.utils.StringUtils).equalsAny(itemType.skuCode, {quoted})].size() > 0")
         if fac_use_bundle:
             if fac_bundle_notnull_only:
                 parts.append("#saleOrder.saleOrderItems.^[bundleSkuCode != null] != null")
@@ -1520,230 +1387,158 @@ def render_facility_compiler():
                 bundle_items = csv_items(fac_bundle_val)
                 if bundle_items:
                     quoted_b = ", ".join(f"'{v}'" for v in bundle_items)
-                    parts.append(
-                        f"#saleOrder.saleOrderItems.^["
-                        f"bundleSkuCode != null and "
-                        f"T(com.unifier.core.utils.StringUtils).equalsAny(bundleSkuCode, {quoted_b})"
-                        f"] != null"
-                    )
+                    parts.append(f"#saleOrder.saleOrderItems.^[bundleSkuCode != null and T(com.unifier.core.utils.StringUtils).equalsAny(bundleSkuCode, {quoted_b})] != null")
         if fac_use_tag and fac_tag_val.strip():
             tag_items = [t.strip() for t in fac_tag_val.split(",") if t.strip()]
             if fac_tag_level == "order":
-                # Order level — whole order check — one condition per tag joined with OR if multiple,
-                # but since each facility rule should handle one tag, generate one rule per tag
                 for tag in tag_items:
                     parts.append(f"#saleOrder.saleOrderItems.^[itemType.hasAnyTag('{tag}')] != null")
-            else:
-                # SKU level — item-level check — one rule per tag generated at output stage
-                # Store tags for multi-rule output below
-                pass  # handled in output section
         if fac_use_brand and fac_brand_val.strip():
             parts.append(f"#saleOrder.saleOrderItems.^[itemType.brand.contains('{fac_brand_val.strip()}')] != null")
-        if fac_use_tps:
-            if fac_tps_value == "true":
-                parts.append("#saleOrder.thirdPartyShipping")
-            else:
-                parts.append("!#saleOrder.thirdPartyShipping")
         if fac_use_cf and fac_cf_field.strip():
-            cf_fn = fac_cf_field.strip()
-            cf_val = fac_cf_value.strip() if fac_cf_value else ""
+            cf_fn = fac_cf_field.strip(); cf_val = fac_cf_value.strip() if fac_cf_value else ""
             cf_g = f"T(com.unifier.services.utils.CustomFieldUtils).getCustomFieldValue(#saleOrder, '{cf_fn}')"
             cf_e = f'{cf_g}.replace(" ", "")' if fac_cf_strip else cf_g
             if fac_cf_match == "contains": parts.append(f"{cf_g} != null and {cf_e}.contains('{cf_val}')")
             elif fac_cf_match == "equalsIgnoreCase": parts.append(f"{cf_e}.equalsIgnoreCase('{cf_val}')")
             elif fac_cf_match == "not_null": parts.append(f"{cf_g} != null")
         if fac_use_soi_cf and fac_soi_cf_field.strip() and fac_soi_cf_value.strip():
-            soi_fn  = fac_soi_cf_field.strip()
-            soi_val = fac_soi_cf_value.strip()
-            soi_g   = f"T(com.unifier.services.utils.CustomFieldUtils).getCustomFieldValue(#saleOrderItem.itemType, '{soi_fn}')"
-            parts.append(f"{soi_g} != null")
-            parts.append(f"{soi_g}.equals('{soi_val}')")
+            soi_fn = fac_soi_cf_field.strip(); soi_val = fac_soi_cf_value.strip()
+            soi_g = f"T(com.unifier.services.utils.CustomFieldUtils).getCustomFieldValue(#saleOrderItem.itemType, '{soi_fn}')"
+            parts.append(f"{soi_g} != null"); parts.append(f"{soi_g}.equals('{soi_val}')")
 
         if not parts and not fac_pincode_rules and not (fac_use_tag and fac_tag_val.strip() and fac_tag_level == "sku"):
-            st.error("Please select at least one condition and provide a value.")
+            st.error("Please fill in at least one condition.")
         else:
-            # ── Determine tag items for SKU-level mode ───────────────
             sku_tag_items = []
             if fac_use_tag and fac_tag_val.strip() and fac_tag_level == "sku":
                 sku_tag_items = [t.strip() for t in fac_tag_val.split(",") if t.strip()]
 
-            # ── Case 1: SKU-level multi-tag — one rule per tag ───────
             if sku_tag_items:
-                # For each tag, combine with pincode chunks if bulk pincodes exist
                 if fac_pincode_rules and len(fac_pincode_rules) > 1:
-                    total = len(sku_tag_items) * len(fac_pincode_rules)
-                    st.success(
-                        f"✅ Generated {total} rule(s) — "
-                        f"{len(sku_tag_items)} tag(s) × {len(fac_pincode_rules)} pincode group(s). "
-                        "Copy each rule separately into Uniware:"
-                    )
+                    st.success(f"✅ Generated {len(sku_tag_items) * len(fac_pincode_rules)} rule(s)")
                     for tag in sku_tag_items:
                         st.markdown(f"##### 🏷️ Tag: `{tag}`")
                         for i, chunk in enumerate(fac_pincode_rules, 1):
                             tag_parts = list(parts)
                             quoted = ", ".join(f"'{p}'" for p in chunk)
-                            if len(chunk) == 1:
-                                tag_parts.append(f"#saleOrderItem.shippingAddress.pincode == '{chunk[0]}'")
-                            else:
-                                tag_parts.append(f"T(com.unifier.core.utils.StringUtils).equalsAny(#saleOrderItem.shippingAddress.pincode, {quoted})")
+                            tag_parts.append(f"#saleOrderItem.shippingAddress.pincode == '{chunk[0]}'" if len(chunk)==1 else f"T(com.unifier.core.utils.StringUtils).equalsAny(#saleOrderItem.shippingAddress.pincode, {quoted})")
                             tag_parts.append(f"#saleOrderItem.itemType.hasAnyTag('{tag}')")
-                            with st.expander(f"{tag} — Pincode group {i} of {len(fac_pincode_rules)} ({len(chunk)} pincodes)", expanded=(i == 1)):
+                            with st.expander(f"{tag} — Group {i} ({len(chunk)} pincodes)", expanded=(i==1)):
                                 st.code("#{\n  " + " and\n  ".join(tag_parts) + "\n}", language="java")
                 else:
-                    st.success(
-                        f"✅ Generated {len(sku_tag_items)} rule(s) — one per tag. "
-                        "Copy each rule separately into Uniware, pointing each to its own facility:"
-                    )
-                    st.info(
-                        "🔖 These are **SKU-level rules** — each item in an order is evaluated individually. "
-                        "Orders with mixed tags (e.g. Flooring + Board items) will split across facilities automatically, "
-                        "provided splitting is enabled in the tenant's facility allocation settings."
-                    )
+                    st.success(f"✅ Generated {len(sku_tag_items)} rule(s) — one per tag")
+                    st.info("🔖 SKU-level rules — orders with mixed tags will split across facilities if splitting is enabled.")
                     for tag in sku_tag_items:
-                        tag_parts = list(parts)
-                        tag_parts.append(f"#saleOrderItem.itemType.hasAnyTag('{tag}')")
+                        tag_parts = list(parts) + [f"#saleOrderItem.itemType.hasAnyTag('{tag}')"]
                         with st.expander(f"🏷️ Rule for tag: {tag}", expanded=True):
                             st.caption(f"Point this rule to the **{tag} facility** in Uniware.")
                             st.code("#{\n  " + " and\n  ".join(tag_parts) + "\n}", language="java")
-
-            # ── Case 2: Bulk pincodes only (no SKU-level tag) ────────
             elif fac_pincode_rules and len(fac_pincode_rules) > 1:
-                st.success(f"✅ Generated {len(fac_pincode_rules)} rule(s) — copy each one separately into Uniware:")
+                st.success(f"✅ Generated {len(fac_pincode_rules)} rule(s)")
                 for i, chunk in enumerate(fac_pincode_rules, 1):
                     chunk_parts = list(parts)
                     quoted = ", ".join(f"'{p}'" for p in chunk)
-                    if len(chunk) == 1:
-                        chunk_parts.append(f"#saleOrderItem.shippingAddress.pincode == '{chunk[0]}'")
-                    else:
-                        chunk_parts.append(f"T(com.unifier.core.utils.StringUtils).equalsAny(#saleOrderItem.shippingAddress.pincode, {quoted})")
-                    with st.expander(f"Rule {i} of {len(fac_pincode_rules)} — {len(chunk)} pincodes", expanded=(i == 1)):
+                    chunk_parts.append(f"#saleOrderItem.shippingAddress.pincode == '{chunk[0]}'" if len(chunk)==1 else f"T(com.unifier.core.utils.StringUtils).equalsAny(#saleOrderItem.shippingAddress.pincode, {quoted})")
+                    with st.expander(f"Rule {i} of {len(fac_pincode_rules)} — {len(chunk)} pincodes", expanded=(i==1)):
                         st.code("#{\n  " + " and\n  ".join(chunk_parts) + "\n}", language="java")
-
-            # ── Case 3: Single rule ───────────────────────────────────
             else:
-                st.success("✅ Rule compiled successfully")
+                st.success("✅ Rule compiled")
                 st.code("#{\n  " + " and\n  ".join(parts) + "\n}", language="java")
+
 
 # =====================================================================
 # ⚙️ RULE COMPILER — SHIPPING PROVIDER
 # =====================================================================
 
 def render_shipping_compiler():
-    st.caption("Toggle Reverse Pickup ON for returns/RTO rules. Leave OFF for standard forward shipments.")
+    st.caption("Select Forward for standard outbound orders, or Reverse for returns and RTOs.")
     st.write("")
 
-    st.markdown("""
-<div style='margin-bottom:1rem'>
-<p style='font-size:0.78rem;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6366f1;margin-bottom:8px'>Select Rule Type</p>
-</div>
-""", unsafe_allow_html=True)
-    sp_rule_type = st.radio(
-        "Rule Type",
-        ["forward", "reverse"],
-        format_func=lambda x: {
-            "forward": "🚚  Forward Shipment — Standard outbound order courier selection",
-            "reverse": "🔄  Reverse Pickup — Return / RTO courier selection"
-        }[x],
-        horizontal=True,
-        key="sp_rule_type",
-        label_visibility="collapsed",
-        help=(
-            "Forward Shipment: builds a rule using #shippingPackage — for selecting which courier ships an outbound order to the customer.\n\n"
-            "Reverse Pickup: builds a rule using #reversePickup — for selecting which courier picks up a return or RTO from the customer.\n\n"
-            "These two use completely different SpEL variables. Mixing them will cause a runtime error."
-        )
-    )
+    # ── Forward / Reverse mini tab ────────────────────────────────
+    sp_rule_type = st.radio("Rule Type", ["forward", "reverse"],
+        format_func=lambda x: {"forward": "🚚  Forward Shipment", "reverse": "🔄  Reverse Pickup / Return"}[x],
+        horizontal=True, key="sp_rule_type",
+        help="Forward: builds a rule using #shippingPackage — selects which courier ships an outbound order.\nReverse: builds a rule using #reversePickup — selects which courier picks up a return or RTO.\n\nThese use completely different variables — mixing them causes a runtime error.")
     is_reverse = sp_rule_type == "reverse"
 
     if is_reverse:
-        st.markdown('<div class="banner-rev">🔄 &nbsp;<strong>Reverse Pickup mode</strong> — all fields below use <code>#reversePickup</code> context</div>', unsafe_allow_html=True)
+        st.markdown('<div class="banner-rev">🔄 <strong>Reverse Pickup mode</strong> — fields below use <code>#reversePickup</code> context</div>', unsafe_allow_html=True)
     else:
-        st.markdown('<div class="banner-fwd">🚚 &nbsp;<strong>Forward Shipment mode</strong> — all fields below use <code>#shippingPackage</code> context</div>', unsafe_allow_html=True)
+        st.markdown('<div class="banner-fwd">🚚 <strong>Forward Shipment mode</strong> — fields below use <code>#shippingPackage</code> context</div>', unsafe_allow_html=True)
 
     st.write("")
 
+    # ════════════════════════════════════════════════════════════
+    # REVERSE PICKUP
+    # ════════════════════════════════════════════════════════════
     if is_reverse:
-        st.markdown("##### 🔄 Reverse Pickup Conditions")
-        st.write("")
 
-        # ── ORDER DETAILS ─────────────────────────────────────────
+        # ORDER
         st.markdown('<div class="section-box">', unsafe_allow_html=True)
-        st.markdown("#### 📦 Order Details")
-        st.caption("Channel, payment method, and return package weight.")
-        st.divider()
+        st.markdown('<p class="sec-heading">📦 Order</p>', unsafe_allow_html=True)
+        st.markdown('<hr class="sec-line">', unsafe_allow_html=True)
 
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("**Return Channel Code**")
-            rev_channel_val = st.text_input("Return Channel Code(s)", key="rev_channel_val",
+            rev_channel_val = st.text_input("Channel Code(s)", key="rev_channel_val",
                 placeholder="Single: SHOPIFY  |  Multiple: SHOPIFY, CUSTOM",
-                help="Channel code of the original order being returned.\n\nAlways uses case-insensitive matching for reverse pickup.\n\nSingle → `equalsIgnoreCase('SHOPIFY')` | Multiple → `equalsIgnoreCaseAny(...)`")
+                help="Channel code of the original order being returned. Always uses case-insensitive matching for reverse pickup.")
         with col2:
             st.markdown("**Box Weight (grams)**")
             rev_use_weight = st.checkbox("Apply Box Weight Filter", key="rev_use_weight",
-                help="Uses `#reversePickup.boxWeight` with exclusive bounds on BOTH sides.\n\nMin → `> value` | Max → `< value`\n\nExample: Min=0, Max=4999 → `(#reversePickup.boxWeight > 0 and #reversePickup.boxWeight < 4999)`")
+                help="Filters by the physical weight of the return package.\n\nUses #reversePickup.boxWeight — both bounds are exclusive (> min, < max).")
             rev_weight_min = rev_weight_max = ""
             if rev_use_weight:
-                rev_weight_min = st.text_input("Min Box Weight — exclusive > (blank = no lower bound)", key="rev_weight_min", placeholder="e.g. 0").strip()
-                rev_weight_max = st.text_input("Max Box Weight — exclusive < (blank = no upper bound)", key="rev_weight_max", placeholder="e.g. 4999").strip()
+                rev_weight_min = st.text_input("Min weight — exclusive > (blank = no lower bound)", key="rev_weight_min", placeholder="e.g. 0").strip()
+                rev_weight_max = st.text_input("Max weight — exclusive < (blank = no upper bound)", key="rev_weight_max", placeholder="e.g. 4999").strip()
+
+        st.write("")
+        col3, col4 = st.columns(2)
+        with col3:
+            st.markdown("**Payment Method**")
+            rev_use_payment = st.checkbox("Apply Payment Method Filter", key="rev_use_payment",
+                help="Filters by the original order's payment type.")
+            rev_payment_val = ""
+            if rev_use_payment:
+                rev_payment_val = st.selectbox("Payment Method", ["COD","PREPAID"], key="rev_payment_val")
+        with col4:
+            st.write("")
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # ── PICKUP LOCATION ───────────────────────────────────────
+        # PICKUP LOCATION (no pincode for reverse — not supported)
         st.markdown('<div class="section-box">', unsafe_allow_html=True)
-        st.markdown("#### 📍 Pickup Location")
-        st.caption("Where the return is being picked up from.")
-        st.divider()
+        st.markdown('<p class="sec-heading">📍 Pickup Location</p>', unsafe_allow_html=True)
+        st.markdown('<hr class="sec-line">', unsafe_allow_html=True)
 
-        col3, col4 = st.columns(2)
-        with col3:
+        col5, col6 = st.columns(2)
+        with col5:
             st.markdown("**State Code**")
             rev_use_state = st.checkbox("Apply State Code Filter", key="rev_use_state",
-                help="Uses: `#reversePickup.shippingAddress.stateCode`")
+                help="Restrict this rule to returns being picked up from specific states.")
             rev_state_val = ""
             if rev_use_state:
                 rev_sc = st.selectbox("Country (to load states)", options=ALL_COUNTRY_OPTIONS,
                     format_func=lambda x: "— Select country —" if x=="" else COUNTRY_OPTIONS[x], key="rev_state_cc")
                 rev_sel = []
                 if rev_sc:
-                    rev_sel = st.multiselect("State(s)", options=get_state_options(rev_sc), key="rev_state_multi",
-                        help="Type to search. Select one or multiple states.")
+                    rev_sel = st.multiselect("State(s)", options=get_state_options(rev_sc), key="rev_state_multi")
                 rev_state_val = ",".join(extract_state_codes(rev_sel))
-        with col4:
-            st.markdown("**Pincode**")
-            rev_use_pincode = st.checkbox("Apply Pincode Filter", key="rev_use_pincode",
-                help="Uses: `#reversePickup.shippingAddress.pincode`")
-            rev_pincode_val = ""
-            if rev_use_pincode:
-                rev_pincode_val = st.text_area("Pincode(s)", key="rev_pincode_val",
-                    placeholder="Single: 560001  |  Multiple: 560001, 560002, 400001", height=80)
-
-        st.write("")
-        col5, col6 = st.columns(2)
-        with col5:
-            rev_use_city, rev_city_val = city_multiselect("rev", label="City")
         with col6:
-            st.markdown("**Payment Method**")
-            rev_use_payment = st.checkbox("Apply Payment Method Filter", key="rev_use_payment",
-                help="Generates: `#reversePickup.saleOrder.paymentMethod.code == 'COD'`")
-            rev_payment_val = ""
-            if rev_use_payment:
-                rev_payment_val = st.selectbox("Payment Method", ["COD","PREPAID"], key="rev_payment_val")
+            rev_use_city, rev_city_val = city_multiselect("rev", label="City")
 
         st.markdown('</div>', unsafe_allow_html=True)
         st.write("")
+
         if st.button("⚙️ Compile Reverse Pickup Rule", type="primary", key="rev_compile"):
-            warnings_list = []
-            if rev_use_weight:
-                if rev_weight_min: validate_inputs(warnings_list, "Min Box Weight", rev_weight_min, "number")
-                if rev_weight_max: validate_inputs(warnings_list, "Max Box Weight", rev_weight_max, "number")
-            if warnings_list:
-                st.warning("⚠️ **Please review:**")
-                for w in warnings_list: st.markdown(f"- {w}")
             rev_parts = []
             if rev_channel_val.strip():
                 e = smart_format_string(rev_channel_val, "#reversePickup.saleOrder.channel.code", use_ignore_case=True)
                 if e: rev_parts.append(e)
+            if rev_use_payment and rev_payment_val:
+                rev_parts.append(f"#reversePickup.saleOrder.paymentMethod.code == '{rev_payment_val}'")
             if rev_use_weight:
                 if rev_weight_min and rev_weight_max:
                     rev_parts.append(f"(#reversePickup.boxWeight > {rev_weight_min} and #reversePickup.boxWeight < {rev_weight_max})")
@@ -1752,149 +1547,111 @@ def render_shipping_compiler():
             if rev_use_state and rev_state_val.strip():
                 e = format_multi_value_condition(rev_state_val, "#reversePickup.shippingAddress.stateCode")
                 if e: rev_parts.append(e)
-            if rev_use_pincode and rev_pincode_val.strip():
-                e = format_multi_value_condition(rev_pincode_val, "#reversePickup.shippingAddress.pincode")
-                if e: rev_parts.append(e)
             if rev_use_city and rev_city_val.strip():
                 e = format_multi_value_condition(rev_city_val, "#reversePickup.shippingAddress.city")
                 if e: rev_parts.append(e)
-            if rev_use_payment and rev_payment_val:
-                rev_parts.append(f"#reversePickup.saleOrder.paymentMethod.code == '{rev_payment_val}'")
             if not rev_parts:
-                st.error("Please provide at least one condition.")
+                st.error("Please fill in at least one condition.")
             else:
-                st.success("✅ Rule compiled successfully")
+                st.success("✅ Rule compiled")
                 st.code("#{\n  " + " and\n  ".join(rev_parts) + "\n}", language="java")
 
+    # ════════════════════════════════════════════════════════════
+    # FORWARD SHIPPING
+    # ════════════════════════════════════════════════════════════
     else:
-        # ── ORDER DETAILS ─────────────────────────────────────────
+
+        # ORDER
         st.markdown('<div class="section-box">', unsafe_allow_html=True)
-        st.markdown("#### 📦 Order Details")
-        st.caption("Channel, payment, weight, and price.")
-        st.divider()
+        st.markdown('<p class="sec-heading">📦 Order</p>', unsafe_allow_html=True)
+        st.markdown('<hr class="sec-line">', unsafe_allow_html=True)
 
         col1, col2 = st.columns(2)
         with col1:
             st.markdown("**Channel Code**")
             sp_use_channel = st.checkbox("Apply Channel Code Filter", key="sp_use_channel",
-                help="Single → `#shippingPackage.saleOrder.channel.code == 'SHOPIFY'`\nMultiple → `equalsAny(...)`\n\nEnable case-insensitive if channel code may have inconsistent casing.")
-            sp_channel_val = ""
-            sp_channel_icase = False
-            sp_channel_strip = False
+                help="The sales channel this order came from.\n\nSingle → matches one channel.\nMultiple (comma-separated) → matches any of them.")
+            sp_channel_val = ""; sp_channel_icase = False; sp_channel_strip = False
             if sp_use_channel:
                 sp_channel_val = st.text_input("Channel Code(s)", key="sp_channel_val",
                     placeholder="Single: SHOPIFY  |  Multiple: FLIPKART, AMAZON_IN")
-                sp_channel_icase = st.checkbox("Case-Insensitive Match", key="sp_channel_icase",
-                    help="Uses `.equalsIgnoreCase()` for single or `equalsIgnoreCaseAny()` for multiple.")
-                sp_channel_strip = st.checkbox("Strip Spaces (.replace(\" \", \"\"))", key="sp_channel_strip",
-                    help="Removes all spaces from channel code before comparing.")
+                sp_channel_icase = st.checkbox("Case-Insensitive Match", key="sp_channel_icase")
+                sp_channel_strip = st.checkbox("Strip Spaces", key="sp_channel_strip")
         with col2:
+            st.markdown("**Payment Method**")
+            sp_use_payment = st.checkbox("Apply Payment Method Filter", key="sp_use_payment",
+                help="COD: cash on delivery.\nPREPAID: paid online.\n\nUseful for assigning dedicated COD couriers.")
+            sp_payment_val = ""
+            if sp_use_payment:
+                sp_payment_val = st.selectbox("Payment Method", ["COD","PREPAID"], key="sp_payment_val")
+
+        st.write("")
+        col3, col4 = st.columns(2)
+        with col3:
+            st.markdown("**Package Weight (grams)**")
+            sp_use_weight = st.checkbox("Apply Weight Filter", key="sp_use_weight",
+                help="Filter by actual package weight.\n\nMin bound is exclusive (>), max bound is inclusive (<=).\n\nThis ensures adjacent weight slabs don't overlap.")
+            sp_weight_min = sp_weight_max = ""
+            if sp_use_weight:
+                sp_weight_min = st.text_input("Min weight — exclusive > (blank = no lower bound)", key="sp_weight_min", placeholder="e.g. 500").strip()
+                sp_weight_max = st.text_input("Max weight — inclusive <= (blank = no upper bound)", key="sp_weight_max", placeholder="e.g. 1000").strip()
+        with col4:
+            st.markdown("**Total Order Price**")
+            sp_use_price = st.checkbox("Apply Price Filter", key="sp_use_price",
+                help="Filter by total declared order value.\n\nMin bound exclusive (>), max bound inclusive (<=).\n\nUseful for routing high-value orders to insured couriers.")
+            sp_price_min = sp_price_max = ""
+            if sp_use_price:
+                sp_price_min = st.text_input("Min price — exclusive > (blank = no lower bound)", key="sp_price_min", placeholder="e.g. 0").strip()
+                sp_price_max = st.text_input("Max price — inclusive <= (blank = no upper bound)", key="sp_price_max", placeholder="e.g. 6000").strip()
+
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # DELIVERY LOCATION
+        st.markdown('<div class="section-box">', unsafe_allow_html=True)
+        st.markdown('<p class="sec-heading">📍 Delivery Location</p>', unsafe_allow_html=True)
+        st.markdown('<hr class="sec-line">', unsafe_allow_html=True)
+
+        col5, col6 = st.columns(2)
+        with col5:
             st.markdown("**State Code**")
             sp_use_state = st.checkbox("Apply State Code Filter", key="sp_use_state",
-                help="Select a country to load its states, then pick one or more.\n\nUses: `#shippingPackage.shippingAddress.stateCode`")
+                help="Restrict courier selection to shipments going to specific states.")
             sp_state_val = ""
             if sp_use_state:
                 sp_sc = st.selectbox("Country (to load states)", options=ALL_COUNTRY_OPTIONS,
                     format_func=lambda x: "— Select country —" if x=="" else COUNTRY_OPTIONS[x], key="sp_state_cc")
                 sp_sel = []
                 if sp_sc:
-                    sp_sel = st.multiselect("State(s)", options=get_state_options(sp_sc), key="sp_state_multi",
-                        help="Type to search. Select one or multiple states.")
+                    sp_sel = st.multiselect("State(s)", options=get_state_options(sp_sc), key="sp_state_multi")
                 sp_state_val = ",".join(extract_state_codes(sp_sel))
-
-        st.markdown('</div>', unsafe_allow_html=True)
-
-        # ── DELIVERY LOCATION ─────────────────────────────────────
-        st.markdown('<div class="section-box">', unsafe_allow_html=True)
-        st.markdown("#### 📍 Delivery Location")
-        st.caption("State, pincode, city, and country.")
-        st.divider()
-
-        col3, col4 = st.columns(2)
-        with col3:
+        with col6:
             st.markdown("**Pincode**")
             sp_use_pincode = st.checkbox("Apply Pincode Filter", key="sp_use_pincode",
-                help="What it is: Restricts courier selection to shipments going to specific delivery pincodes.\n\nHow it helps: Assign different couriers based on serviceability zones — e.g. a local courier for certain pincodes, a national courier for the rest.\n\nNote: a single rule handles up to ~40 pincodes reliably. Use the file upload for larger lists.")
-            sp_pincode_val = ""
-            sp_pincode_rules = []
+                help="Restrict courier selection to specific delivery pincodes.\n\nA single rule handles up to ~40 pincodes. Use file upload for larger lists.")
+            sp_pincode_val = ""; sp_pincode_rules = []
             if sp_use_pincode:
-                sp_pin_mode = st.radio("How do you want to enter pincodes?",
-                    ["Type manually", "Upload file (for large lists)"],
-                    horizontal=True, key="sp_pin_mode",
-                    help="Type manually: best for up to ~40 pincodes\nUpload file: for larger lists — the tool automatically splits them into multiple rules of 40 pincodes each.")
+                sp_pin_mode = st.radio("Entry method", ["Type manually","Upload file (large lists)"], horizontal=True, key="sp_pin_mode")
                 if sp_pin_mode == "Type manually":
                     sp_pincode_val = st.text_area("Pincode(s)", key="sp_pincode_val",
-                        placeholder="Single: 560001  |  Multiple: 560001, 560002, 400001", height=80,
-                        help="Enter one pincode or many separated by commas. All must be 6 digits.")
+                        placeholder="Single: 560001  |  Multiple: 560001, 560002", height=80)
                 else:
-                    with st.expander("📄 How to prepare your CSV / TXT file", expanded=False):
-                        st.markdown(
-                            "**Option 1 — One pincode per line (recommended):**\n"
-                            "```\n560001\n560002\n560003\n400001\n```\n\n"
-                            "**Option 2 — Comma separated:**\n"
-                            "```\n560001, 560002, 560003, 400001\n```\n\n"
-                            "**Rules:**\n"
-                            "- Every pincode must be exactly **6 digits**\n"
-                            "- No headers needed — just the pincodes\n"
-                            "- Invalid values (letters, 5-digit, 7-digit) are skipped automatically and shown as a warning\n"
-                            "- The tool splits them into groups of **40 pincodes per rule** automatically\n"
-                            "- Save as `.csv` or `.txt` before uploading"
-                        )
+                    with st.expander("📄 How to prepare your file", expanded=False):
+                        st.markdown("One pincode per line, or comma-separated. Must be exactly 6 digits.")
                         import io as _io2
-                        sp_pin_template = _io2.StringIO()
-                        sp_pin_template.write("pincode\n")
-                        for p in ["560001","560002","560003","400001","400002","110001","110002"]:
-                            sp_pin_template.write(f"{p}\n")
-                        st.download_button(
-                            label="⬇️ Download Pincode Template CSV",
-                            data=sp_pin_template.getvalue(),
-                            file_name="pincode_template.csv",
-                            mime="text/csv",
-                            key="sp_pin_template_dl",
-                            help="Download this template, replace the sample pincodes with your own, and upload it."
-                        )
-                        st.caption("💡 Tip: you can also just use a plain .txt file with one pincode per line — no headers needed.")
-                    st.caption("Upload a CSV or TXT file — one pincode per line or comma-separated.")
-                    sp_pin_file = st.file_uploader("Upload pincode file", type=["csv","txt"], key="sp_pin_file",
-                        help="One pincode per line or comma-separated. Invalid entries are skipped. Rules are auto-split into groups of 40.")
+                        _t2 = _io2.StringIO(); _t2.write("pincode\n")
+                        for p in ["560001","560002","560003","400001","110001"]: _t2.write(f"{p}\n")
+                        st.download_button("⬇️ Download Template", data=_t2.getvalue(), file_name="pincode_template.csv", mime="text/csv", key="sp_pin_template_dl")
+                    sp_pin_file = st.file_uploader("Upload pincode file", type=["csv","txt"], key="sp_pin_file")
                     if sp_pin_file:
                         raw_sp = sp_pin_file.read().decode("utf-8", errors="ignore")
                         all_sp_pins = [p.strip() for p in re.split(r'[\n,]+', raw_sp) if re.match(r'^\d{6}$', p.strip())]
-                        bad_sp_pins = [p.strip() for p in re.split(r'[\n,]+', raw_sp) if p.strip() and not re.match(r'^\d{6}$', p.strip())]
-                        if bad_sp_pins:
-                            st.warning(f"⚠️ Skipped {len(bad_sp_pins)} invalid value(s): {', '.join(bad_sp_pins[:10])}{'...' if len(bad_sp_pins)>10 else ''}")
+                        bad_sp = [p.strip() for p in re.split(r'[\n,]+', raw_sp) if p.strip() and not re.match(r'^\d{6}$', p.strip())]
+                        if bad_sp: st.warning(f"⚠️ Skipped {len(bad_sp)} invalid")
                         if all_sp_pins:
-                            CHUNK_SP = 40
-                            sp_chunks = [all_sp_pins[i:i+CHUNK_SP] for i in range(0, len(all_sp_pins), CHUNK_SP)]
+                            sp_chunks = [all_sp_pins[i:i+40] for i in range(0, len(all_sp_pins), 40)]
                             sp_pincode_rules = sp_chunks
-                            st.success(f"✅ Loaded {len(all_sp_pins)} valid pincodes — will generate {len(sp_chunks)} rule(s) of up to {CHUNK_SP} pincodes each.")
+                            st.success(f"✅ {len(all_sp_pins)} pincodes → {len(sp_chunks)} rule(s)")
                             sp_pincode_val = ",".join(all_sp_pins)
-        with col4:
-            st.markdown("**Payment Method**")
-            sp_use_payment = st.checkbox("Apply Payment Method Filter", key="sp_use_payment",
-                help="Generates: `#shippingPackage.saleOrder.paymentMethod.code == 'COD'`\n\nUseful for assigning dedicated COD couriers.")
-            sp_payment_val = ""
-            if sp_use_payment:
-                sp_payment_val = st.selectbox("Payment Method", ["COD","PREPAID"], key="sp_payment_val")
-
-        st.write("")
-        col5, col6 = st.columns(2)
-        with col5:
-            st.markdown("**Package Weight (grams)**")
-            sp_use_weight = st.checkbox("Apply Weight Filter", key="sp_use_weight",
-                help="Uses: `#shippingPackage.actualWeight`\n\n• Min bound is exclusive (>)\n• Max bound is inclusive (<=)\n\nExample: Min=500, Max=1000 → `actualWeight > 500 and actualWeight <= 1000`\n\nThis asymmetry ensures adjacent weight slabs don't overlap.")
-            sp_weight_min = sp_weight_max = ""
-            if sp_use_weight:
-                sp_weight_min = st.text_input("Min Weight — exclusive > (blank = no lower bound)", key="sp_weight_min", placeholder="e.g. 500").strip()
-                sp_weight_max = st.text_input("Max Weight — inclusive <= (blank = no upper bound)", key="sp_weight_max", placeholder="e.g. 1000").strip()
-        with col6:
-            st.markdown("**Total Order Price**")
-            sp_use_price = st.checkbox("Apply Price Filter", key="sp_use_price",
-                help="Uses: `#shippingPackage.totalPrice`\n\n• Min bound is exclusive (>)\n• Max bound is inclusive (<=)\n\nUseful for routing high-value orders to insured/premium couriers.")
-            sp_price_min = sp_price_max = ""
-            if sp_use_price:
-                sp_price_min = st.text_input("Min Price — exclusive > (blank = no lower bound)", key="sp_price_min", placeholder="e.g. 0").strip()
-                sp_price_max = st.text_input("Max Price — inclusive <= (blank = no upper bound)", key="sp_price_max", placeholder="e.g. 6000").strip()
 
         st.write("")
         col7, col8 = st.columns(2)
@@ -1905,124 +1662,91 @@ def render_shipping_compiler():
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # ── PRODUCT ───────────────────────────────────────────────
+        # PRODUCT
         st.markdown('<div class="section-box">', unsafe_allow_html=True)
-        st.markdown("#### 🏷️ Product")
-        st.caption("SKU, tags, bundle SKU, item count, and package type.")
-        st.divider()
+        st.markdown('<p class="sec-heading">🏷️ Product</p>', unsafe_allow_html=True)
+        st.markdown('<hr class="sec-line">', unsafe_allow_html=True)
 
         col9, col10 = st.columns(2)
         with col9:
-            st.markdown("**Number of Items in Package**")
+            st.markdown("**Number of Items**")
             sp_use_items = st.checkbox("Apply Item Count Filter", key="sp_use_items",
-                help="Filters by how many line items are in the shipping package.\n\nUses: `#shippingPackage.saleOrderItems.size()`\n\nUseful for assigning different couriers for single-item vs bulk shipments.")
-            sp_items_op = "<="
-            sp_items_val = ""
+                help="Filter by how many line items are in the shipping package.\n\nUseful for assigning different couriers for single-item vs bulk shipments.")
+            sp_items_op = "<="; sp_items_val = ""
             if sp_use_items:
                 sp_items_op = st.selectbox("Operator", ["<=","<",">=",">","=="],
-                    format_func=lambda x: {"<=":"<= (Up to N items — small/single shipments)","<":"<  (Fewer than N — strictly less)",">=":">= (At least N items — bulk)",">":" >  (More than N — strictly greater)","==":"== (Exactly N items)"}[x],
-                    key="sp_items_op",
-                    help="• <= : up to N items (e.g. <= 1 for single-item-only couriers)\n• >= : at least N items (bulk threshold)\n• == : exactly N items")
-                sp_items_val = st.text_input("Item Count Threshold", key="sp_items_val", placeholder="e.g. 12").strip()
+                    format_func=lambda x: {"<=":"<= Up to N items","<":"< Fewer than N",">=":">= At least N",">":"> More than N","==":"== Exactly N"}[x],
+                    key="sp_items_op")
+                sp_items_val = st.text_input("Item count", key="sp_items_val", placeholder="e.g. 12").strip()
         with col10:
-            st.markdown("**Item Tag (hasAnyTag)**")
+            st.markdown("**Item Tag**")
             sp_use_tag = st.checkbox("Apply Item Tag Filter", key="sp_use_tag",
-                help="Checks if any item in the package has a specific tag from the item master.\n\nGenerates: `#shippingPackage.saleOrderItems.^[itemType.hasAnyTag('TAG')] != null`\n\nUseful for routing packages with tagged items (mattress, furniture) to specialist couriers.")
+                help="Filter by product tags from the Uniware item master.\n\nChecks if at least one item in the package has this tag.")
             sp_tag_val = ""
             if sp_use_tag:
-                sp_tag_val = st.text_input("Item Tag Value", key="sp_tag_val", placeholder="e.g. mattress  or  Furniture")
+                sp_tag_val = st.text_input("Tag Value", key="sp_tag_val", placeholder="e.g. mattress  or  Furniture")
 
         st.write("")
-        col_sku1, col_sku2 = st.columns(2)
-        with col_sku1:
-            st.markdown("**SKU Code (Item Type SKU)**")
+        col11, col12 = st.columns(2)
+        with col11:
+            st.markdown("**SKU Code**")
             sp_use_sku = st.checkbox("Apply SKU Code Filter", key="sp_use_sku",
-                help=(
-                    "What it is: Filters courier selection based on specific product SKUs in the package.\n\n"
-                    "How it helps: Assign different couriers for specific products — e.g. heavy/fragile SKUs go to a specialist courier.\n\n"
-                    "Uses `itemType.skuCode` — confirmed from 20 live enabled SP rules.\n"
-                    "Single or multiple SKUs — all handled the same way."
-                )
-            )
+                help="Filter by product SKU code.\n\nChecks if at least one item in the package matches the given SKU(s). Uses itemType.skuCode.")
             sp_sku_val = ""
             if sp_use_sku:
                 sp_sku_val = st.text_area("SKU Code(s)", key="sp_sku_val",
-                    placeholder="Single: SKU001  |  Multiple: SKU001, SKU002, SKU003", height=80,
-                    help="Enter exact SKU code(s) as in Uniware item master. Case-sensitive.")
-
-        with col_sku2:
+                    placeholder="Single: SKU001  |  Multiple: SKU001, SKU002", height=80)
+        with col12:
             st.markdown("**Bundle SKU Code**")
             sp_use_bundle = st.checkbox("Apply Bundle SKU Code Filter", key="sp_use_bundle",
-                help=(
-                    "What it is: Filters by the bundle/combo SKU code — used when the order contains a product that is part of a bundle.\n\n"
-                    "How it helps: Route orders containing specific bundles to a particular courier.\n\n"
-                    "Uses `bundleSkuCode` — confirmed from live enabled facility rules.\n"
-                    "Add a null check — bundle SKU is only present on bundle items, not regular items."
-                )
-            )
-            sp_bundle_val = ""
+                help="Filter by bundle/combo product SKU.")
+            sp_bundle_val = ""; sp_bundle_notnull_only = False
             if sp_use_bundle:
-                sp_bundle_val = st.text_area("Bundle SKU Code(s)", key="sp_bundle_val",
-                    placeholder="Single: BUNDLE001  |  Multiple: BUNDLE001, BUNDLE002", height=80,
-                    help="Enter exact bundle SKU code(s). Leave blank to check for any bundle SKU (not null check only).")
-                sp_bundle_notnull_only = st.checkbox("Just check if any bundle SKU exists (no specific code)", key="sp_bundle_notnull_only",
-                    help="Ticking this will match any package that has a bundle item — regardless of which specific bundle SKU it is.")
+                sp_bundle_notnull_only = st.checkbox("Just check if any bundle exists", key="sp_bundle_notnull_only")
+                if not sp_bundle_notnull_only:
+                    sp_bundle_val = st.text_area("Bundle SKU Code(s)", key="sp_bundle_val",
+                        placeholder="Single: BUNDLE001  |  Multiple: BUNDLE001, BUNDLE002", height=80)
 
         st.write("")
-        col_spt1, col_spt2 = st.columns(2)
-        with col_spt1:
+        col13, col14 = st.columns(2)
+        with col13:
             st.markdown("**Shipping Package Type**")
-            sp_use_spt = st.checkbox("Apply Shipping Package Type Filter", key="sp_use_spt",
-                help=(
-                    "What it is: Filters by the type/category code assigned to the shipping package in Uniware.\n\n"
-                    "How it helps: Route packages of a specific type to a particular courier — e.g. all packages of type 'A15' go to a heavy-goods courier.\n\n"
-                    "Uses `#shippingPackage.shippingPackageType.code` — confirmed from live enabled SP rules.\n\n"
-                    "The code must match exactly as configured in your Uniware shipping package type master."
-                )
-            )
+            sp_use_spt = st.checkbox("Apply Package Type Filter", key="sp_use_spt",
+                help="Filter by the type/category code assigned to the shipping package in Uniware.\n\nThe code must match exactly as configured in your Uniware shipping package type master.")
             sp_spt_val = ""
             if sp_use_spt:
-                sp_spt_val = st.text_input("Shipping Package Type Code", key="sp_spt_val",
-                    placeholder="e.g. A15  or  T-R1  or  A3",
-                    help="Enter the exact package type code as configured in Uniware. Case-sensitive.")
-        with col_spt2:
+                sp_spt_val = st.text_input("Package Type Code", key="sp_spt_val", placeholder="e.g. A15  or  T-R1").strip()
+        with col14:
             st.write("")
 
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # ── ADVANCED ──────────────────────────────────────────────
+        # ADVANCED
         st.markdown('<div class="section-box-grey">', unsafe_allow_html=True)
-        st.markdown("#### ⚙️ Advanced")
-        st.caption("Custom fields from your sales channel.")
-        st.divider()
+        st.markdown('<p class="sec-heading">⚙️ Advanced</p>', unsafe_allow_html=True)
+        st.markdown('<hr class="sec-line">', unsafe_allow_html=True)
 
-        col11, col12 = st.columns(2)
-        with col11:
+        col15, col16 = st.columns(2)
+        with col15:
             st.markdown("**Custom Field**")
             sp_use_cf = st.checkbox("Apply Custom Field Filter", key="sp_use_cf",
-                help="Filters by a custom field on the sale order (e.g. Tags, Delivery_Partner, tagsfetched).\n\n• Contains — field has this word somewhere (most common)\n• Exactly Equals — field must be precisely this value\n• Just Exists — field just needs to be present\n\nField Name must match exactly as configured in Uniware.")
-            sp_cf_field = sp_cf_match = sp_cf_value = sp_cf_strip = ""
-            sp_cf_match = "contains"
-            sp_cf_strip = False
+                help="Extra fields from the sales channel — e.g. Tags, Delivery_Partner, tagsfetched.\n\nField name must match exactly as configured in Uniware.")
+            sp_cf_field = ""; sp_cf_match = "contains"; sp_cf_value = ""; sp_cf_strip = False
             if sp_use_cf:
-                sp_cf_field = st.text_input("Custom Field Name (exact key in Uniware)", key="sp_cf_field",
-                    placeholder="e.g. Tags  or  Delivery_Partner  or  tagsfetched")
-                sp_cf_match = st.selectbox("How should the field be matched?",
-                    ["contains","equalsIgnoreCase","not_null"],
-                    format_func=lambda x: {"contains":"🔍 Contains — field has this word/value somewhere","equalsIgnoreCase":"✅ Exactly Equals — field is precisely this value","not_null":"📌 Just Exists — any non-empty value is enough"}[x],
-                    key="sp_cf_match",
-                    help="🔍 Contains: most common — use for Tags which holds multiple comma-separated values\n✅ Exactly Equals: field must be one precise value (e.g. Delivery_Partner == 'DELHIVERY_5KGS')\n📌 Just Exists: field just needs to be present")
+                sp_cf_field = st.text_input("Custom Field Name", key="sp_cf_field", placeholder="e.g. Tags  or  Delivery_Partner")
+                sp_cf_match = st.selectbox("Match type", ["contains","equalsIgnoreCase","not_null"],
+                    format_func=lambda x: {"contains":"🔍 Contains","equalsIgnoreCase":"✅ Exactly Equals","not_null":"📌 Just Exists"}[x],
+                    key="sp_cf_match")
                 if sp_cf_match != "not_null":
-                    sp_cf_value = st.text_input("Value to match against", key="sp_cf_value",
-                        placeholder="e.g. Express  or  DELHIVERY_5KGS  or  EDNDDTAG")
+                    sp_cf_value = st.text_input("Value to match", key="sp_cf_value", placeholder="e.g. Express  or  DELHIVERY_5KGS")
                 if sp_cf_match in ("contains","equalsIgnoreCase"):
-                    sp_cf_strip = st.checkbox("Strip Spaces (.replace(\" \", \"\"))", key="sp_cf_strip",
-                        help="Removes all spaces from field value before comparing. Use when channel may send tags with accidental spaces.")
-        with col12:
+                    sp_cf_strip = st.checkbox("Ignore spaces in field value", key="sp_cf_strip")
+        with col16:
             st.write("")
 
         st.markdown('</div>', unsafe_allow_html=True)
         st.write("")
+
         if st.button("⚙️ Compile Shipping Provider Rule", type="primary", key="sp_compile"):
             warnings_list = []
             if sp_use_channel and sp_channel_val.strip(): validate_inputs(warnings_list, "Channel Code", sp_channel_val, "channel")
@@ -2033,29 +1757,28 @@ def render_shipping_compiler():
             if sp_use_price:
                 if sp_price_min: validate_inputs(warnings_list, "Min Price", sp_price_min, "number")
                 if sp_price_max: validate_inputs(warnings_list, "Max Price", sp_price_max, "number")
-            if sp_use_items and sp_items_val: validate_inputs(warnings_list, "Item Count", sp_items_val, "number")
             if warnings_list:
-                st.warning("⚠️ **Please review:**")
+                st.warning("⚠️ Please review:")
                 for w in warnings_list: st.markdown(f"- {w}")
 
             parts = []
             if sp_use_channel and sp_channel_val.strip():
                 e = smart_format_string(sp_channel_val, "#shippingPackage.saleOrder.channel.code", sp_channel_icase, sp_channel_strip)
                 if e: parts.append(e)
-            if sp_use_state and sp_state_val.strip():
-                e = format_multi_value_condition(sp_state_val, "#shippingPackage.shippingAddress.stateCode")
-                if e: parts.append(e)
-            if sp_use_pincode and sp_pincode_val.strip():
-                e = format_multi_value_condition(sp_pincode_val, "#shippingPackage.shippingAddress.pincode")
-                if e: parts.append(e)
+            if sp_use_payment and sp_payment_val:
+                parts.append(f"#shippingPackage.saleOrder.paymentMethod.code == '{sp_payment_val}'")
             if sp_use_weight:
                 if sp_weight_min: parts.append(f"#shippingPackage.actualWeight > {sp_weight_min}")
                 if sp_weight_max: parts.append(f"#shippingPackage.actualWeight <= {sp_weight_max}")
             if sp_use_price:
                 if sp_price_min: parts.append(f"#shippingPackage.totalPrice > {sp_price_min}")
                 if sp_price_max: parts.append(f"#shippingPackage.totalPrice <= {sp_price_max}")
-            if sp_use_payment and sp_payment_val:
-                parts.append(f"#shippingPackage.saleOrder.paymentMethod.code == '{sp_payment_val}'")
+            if sp_use_state and sp_state_val.strip():
+                e = format_multi_value_condition(sp_state_val, "#shippingPackage.shippingAddress.stateCode")
+                if e: parts.append(e)
+            if sp_use_pincode and sp_pincode_val.strip():
+                e = format_multi_value_condition(sp_pincode_val, "#shippingPackage.shippingAddress.pincode")
+                if e: parts.append(e)
             if sp_use_city and sp_city_val.strip():
                 e = format_multi_value_condition(sp_city_val, "#shippingPackage.shippingAddress.city")
                 if e: parts.append(e)
@@ -2070,11 +1793,7 @@ def render_shipping_compiler():
                 sku_items = csv_items(sp_sku_val)
                 if sku_items:
                     quoted = ", ".join(f"'{v}'" for v in sku_items)
-                    parts.append(
-                        f"#shippingPackage.saleOrderItems.^["
-                        f"T(com.unifier.core.utils.StringUtils).equalsAny(itemType.skuCode, {quoted})"
-                        f"] != null"
-                    )
+                    parts.append(f"#shippingPackage.saleOrderItems.^[T(com.unifier.core.utils.StringUtils).equalsAny(itemType.skuCode, {quoted})] != null")
             if sp_use_bundle:
                 if sp_bundle_notnull_only:
                     parts.append("#shippingPackage.saleOrderItems.^[bundleSkuCode != null] != null")
@@ -2082,17 +1801,11 @@ def render_shipping_compiler():
                     bundle_items = csv_items(sp_bundle_val)
                     if bundle_items:
                         quoted_b = ", ".join(f"'{v}'" for v in bundle_items)
-                        parts.append(
-                            f"#shippingPackage.saleOrderItems.^["
-                            f"bundleSkuCode != null and "
-                            f"T(com.unifier.core.utils.StringUtils).equalsAny(bundleSkuCode, {quoted_b})"
-                            f"] != null"
-                        )
-            if sp_use_spt and sp_spt_val.strip():
-                parts.append(f"#shippingPackage.shippingPackageType.code == '{sp_spt_val.strip()}'")
+                        parts.append(f"#shippingPackage.saleOrderItems.^[bundleSkuCode != null and T(com.unifier.core.utils.StringUtils).equalsAny(bundleSkuCode, {quoted_b})] != null")
+            if sp_use_spt and sp_spt_val:
+                parts.append(f"#shippingPackage.shippingPackageType.code == '{sp_spt_val}'")
             if sp_use_cf and sp_cf_field.strip():
-                sp_fn = sp_cf_field.strip()
-                sp_val = sp_cf_value.strip() if sp_cf_value else ""
+                sp_fn = sp_cf_field.strip(); sp_val = sp_cf_value.strip() if sp_cf_value else ""
                 sp_g = f"T(com.unifier.services.utils.CustomFieldUtils).getCustomFieldValue(#shippingPackage.saleOrder, '{sp_fn}')"
                 sp_e = f'{sp_g}.replace(" ", "")' if sp_cf_strip else sp_g
                 if sp_cf_match == "contains": parts.append(f"{sp_g} != null and {sp_e}.contains('{sp_val}')")
@@ -2100,25 +1813,19 @@ def render_shipping_compiler():
                 elif sp_cf_match == "not_null": parts.append(f"{sp_g} != null")
 
             if not parts and not sp_pincode_rules:
-                st.error("Please select at least one condition and provide a value.")
+                st.error("Please fill in at least one condition.")
             elif sp_pincode_rules and len(sp_pincode_rules) > 1:
-                st.success(f"✅ Generated {len(sp_pincode_rules)} rule(s) — copy each one separately into Uniware:")
+                st.success(f"✅ Generated {len(sp_pincode_rules)} rule(s)")
                 for i, chunk in enumerate(sp_pincode_rules, 1):
                     chunk_parts = list(parts)
                     quoted = ", ".join(f"'{p}'" for p in chunk)
-                    if len(chunk) == 1:
-                        chunk_parts.append(f"#shippingPackage.shippingAddress.pincode == '{chunk[0]}'")
-                    else:
-                        chunk_parts.append(f"T(com.unifier.core.utils.StringUtils).equalsAny(#shippingPackage.shippingAddress.pincode, {quoted})")
+                    chunk_parts.append(f"#shippingPackage.shippingAddress.pincode == '{chunk[0]}'" if len(chunk)==1 else f"T(com.unifier.core.utils.StringUtils).equalsAny(#shippingPackage.shippingAddress.pincode, {quoted})")
                     with st.expander(f"Rule {i} of {len(sp_pincode_rules)} — {len(chunk)} pincodes", expanded=(i==1)):
                         st.code("#{\n  " + " and\n  ".join(chunk_parts) + "\n}", language="java")
             else:
-                st.success("✅ Rule compiled successfully")
+                st.success("✅ Rule compiled")
                 st.code("#{\n  " + " and\n  ".join(parts) + "\n}", language="java")
 
-# =====================================================================
-# ⚙️ RULE COMPILER — INVENTORY
-# =====================================================================
 
 def render_inventory_compiler():
     st.caption("Check the stock pools to include. Base deductions (open sales, pendency, blocked stock) are always applied.")
@@ -2227,15 +1934,39 @@ st.markdown("""
 }
 .nav-card.active .nav-label { color: rgba(255,255,255,0.95); }
 .nav-sub {
-    font-size: 0.65rem;
+    font-size: 0.64rem;
     color: #8686AC;
     margin-top: 3px;
     display: block;
     font-weight: 400;
     line-height: 1.35;
-    transition: color 0.18s ease;
+    transition: color 0.2s ease;
+    pointer-events: none;
 }
 .nav-card.active .nav-sub { color: rgba(255,255,255,0.5); }
+.nav-card:not(.active) .nav-sub { opacity: 0.8; }
+
+/* ── Nav button fully transparent overlay over card ── */
+div[data-testid="column"] .stButton {
+    position: relative !important;
+    margin-top: -5.5rem !important;
+    height: 5.5rem !important;
+    z-index: 20 !important;
+}
+div[data-testid="column"] .stButton > button {
+    opacity: 0 !important;
+    width: 100% !important;
+    height: 5.5rem !important;
+    cursor: pointer !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+div[data-testid="column"] .stButton > button:hover {
+    transform: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -2243,45 +1974,47 @@ col_a, col_b, col_c, col_d = st.columns(4)
 
 with col_a:
     active_a = "active" if st.session_state.module == "FACILITY" else ""
-    st.markdown(f'<div class="nav-card {active_a}"><span class="nav-icon">🏭</span><span class="nav-label">Facility</span><span class="nav-sub">Warehouse allocation rules</span></div>', unsafe_allow_html=True)
-    if st.button("Facility", key="nav_facility", use_container_width=True, help="Build Facility Allocation rules"):
+    st.markdown(f'''<div class="nav-card {active_a}">
+        <span class="nav-icon">🏭</span>
+        <span class="nav-label">Facility</span>
+        <span class="nav-sub">Warehouse routing</span>
+    </div>''', unsafe_allow_html=True)
+    if st.button("·", key="nav_facility", use_container_width=True):
         st.session_state.module = "FACILITY"
         st.rerun()
 
 with col_b:
     active_b = "active" if st.session_state.module == "SHIPPING_FWD" else ""
-    st.markdown(f'<div class="nav-card {active_b}"><span class="nav-icon">🚚</span><span class="nav-label">Shipping</span><span class="nav-sub">Courier selection rules</span></div>', unsafe_allow_html=True)
-    if st.button("Shipping", key="nav_shipping", use_container_width=True, help="Build Shipping Provider Allocation rules"):
+    st.markdown(f'''<div class="nav-card {active_b}">
+        <span class="nav-icon">🚚</span>
+        <span class="nav-label">Shipping</span>
+        <span class="nav-sub">Courier selection</span>
+    </div>''', unsafe_allow_html=True)
+    if st.button("·", key="nav_shipping", use_container_width=True):
         st.session_state.module = "SHIPPING_FWD"
         st.rerun()
 
 with col_c:
     active_c = "active" if st.session_state.module == "INVENTORY_CALC" else ""
-    st.markdown(f'<div class="nav-card {active_c}"><span class="nav-icon">📦</span><span class="nav-label">Inventory</span><span class="nav-sub">Stock sync formulas</span></div>', unsafe_allow_html=True)
-    if st.button("Inventory", key="nav_inventory", use_container_width=True, help="Build Inventory Sync formulas"):
+    st.markdown(f'''<div class="nav-card {active_c}">
+        <span class="nav-icon">📦</span>
+        <span class="nav-label">Inventory</span>
+        <span class="nav-sub">Stock sync formulas</span>
+    </div>''', unsafe_allow_html=True)
+    if st.button("·", key="nav_inventory", use_container_width=True):
         st.session_state.module = "INVENTORY_CALC"
         st.rerun()
 
 with col_d:
     active_d = "active" if st.session_state.module == "TOOLS" else ""
-    st.markdown(f'<div class="nav-card {active_d}"><span class="nav-icon">🔧</span><span class="nav-label">Tools</span><span class="nav-sub">Validator · Audit · Decoder</span></div>', unsafe_allow_html=True)
-    if st.button("Tools", key="nav_tools", use_container_width=True, help="Rule Validator, Reverse Compiler, Audit, Anomaly Suggester"):
+    st.markdown(f'''<div class="nav-card {active_d}">
+        <span class="nav-icon">🔧</span>
+        <span class="nav-label">Tools</span>
+        <span class="nav-sub">Validator · Audit · Decoder</span>
+    </div>''', unsafe_allow_html=True)
+    if st.button("·", key="nav_tools", use_container_width=True):
         st.session_state.module = "TOOLS"
         st.rerun()
-
-# Hide the nav buttons — only the cards are visible
-st.markdown("""
-<style>
-[data-testid="stHorizontalBlock"] .stButton > button {
-    opacity: 0 !important;
-    position: absolute !important;
-    top: 0 !important; left: 0 !important;
-    width: 100% !important; height: 100% !important;
-    cursor: pointer !important;
-    z-index: 10 !important;
-}
-</style>
-""", unsafe_allow_html=True)
 
 module = st.session_state.module
 
@@ -2546,9 +2279,7 @@ elif module == "TOOLS":
 # ── Footer ────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="app-footer">
-  <div class="footer-credit">
-    Designed &amp; built by <span>Saqib Khan</span> &nbsp;·&nbsp; UniCommerce Technical Analytics
-  </div>
+  <div class="footer-credit">Managed by <span>Saqib Khan</span></div>
   <div class="footer-version">Rule Engine &nbsp;·&nbsp; v8.0.0</div>
 </div>
 """, unsafe_allow_html=True)
