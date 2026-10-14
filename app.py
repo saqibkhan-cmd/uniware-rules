@@ -316,20 +316,36 @@ html, body, [class*="css"] {
 }
 
 /* ── Section heading — large & prominent ── */
-.sec-heading {
-    font-size: 1.05rem !important;
-    font-weight: 800 !important;
-    letter-spacing: 0.03em !important;
+.sec-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 1rem 0;
+    padding-bottom: 0.7rem;
+    border-bottom: 2px solid rgba(39,39,87,0.10);
+}
+.sec-title {
+    font-size: 1.1rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.05em !important;
     color: #0F0E47 !important;
-    margin: 0 0 0.1rem 0.4rem !important;
+    text-transform: uppercase !important;
+    line-height: 1 !important;
+}
+.sec-heading {
+    font-size: 1.1rem !important;
+    font-weight: 900 !important;
+    letter-spacing: 0.05em !important;
+    color: #0F0E47 !important;
+    margin: 0 0 0.1rem 0 !important;
     padding: 0 !important;
     display: block;
     text-transform: uppercase;
 }
 .sec-line {
     border: none !important;
-    border-top: 1.5px solid rgba(39,39,87,0.09) !important;
-    margin: 0.5rem 0 1.2rem 0 !important;
+    border-top: 2px solid rgba(39,39,87,0.09) !important;
+    margin: 0.3rem 0 1.1rem 0 !important;
 }
 
 /* ── h4 fallback ── */
@@ -1097,9 +1113,7 @@ def render_facility_compiler():
     # ═══════════════════════════════════════
     # ORDER
     # ═══════════════════════════════════════
-    st.markdown('<div class="section-box">', unsafe_allow_html=True)
-    st.markdown('<p class="sec-heading">📦 Order</p>', unsafe_allow_html=True)
-    st.markdown('<hr class="sec-line">', unsafe_allow_html=True)
+    st.markdown('<div class="sec-header"><span class="sec-icon"></span><span class="sec-title">📦 Order</span></div>', unsafe_allow_html=True)
 
     col1, col2 = st.columns(2)
     with col1:
@@ -1174,14 +1188,10 @@ def render_facility_compiler():
                 }[x], horizontal=True, key="fac_tps_value",
                 help="True: order is being shipped by a third-party courier the customer arranged.\nFalse: order goes through Uniware's normal courier allocation flow.")
 
-    st.markdown('</div>', unsafe_allow_html=True)
-
     # ═══════════════════════════════════════
     # LOCATION
     # ═══════════════════════════════════════
-    st.markdown('<div class="section-box">', unsafe_allow_html=True)
-    st.markdown('<p class="sec-heading">📍 Delivery Location</p>', unsafe_allow_html=True)
-    st.markdown('<hr class="sec-line">', unsafe_allow_html=True)
+    st.markdown('<div class="sec-header"><span class="sec-icon"></span><span class="sec-title">📍 Delivery Location</span></div>', unsafe_allow_html=True)
 
     col5, col6 = st.columns(2)
     with col5:
@@ -1235,14 +1245,10 @@ def render_facility_compiler():
     with col8:
         fac_use_country, fac_country_val, fac_country_mode = country_selectbox("fac")
 
-    st.markdown('</div>', unsafe_allow_html=True)
-
     # ═══════════════════════════════════════
     # PRODUCT
     # ═══════════════════════════════════════
-    st.markdown('<div class="section-box">', unsafe_allow_html=True)
-    st.markdown('<p class="sec-heading">🏷️ Product</p>', unsafe_allow_html=True)
-    st.markdown('<hr class="sec-line">', unsafe_allow_html=True)
+    st.markdown('<div class="sec-header"><span class="sec-icon"></span><span class="sec-title">🏷️ Product</span></div>', unsafe_allow_html=True)
 
     col9, col10 = st.columns(2)
     with col9:
@@ -1296,14 +1302,10 @@ def render_facility_compiler():
         if fac_use_brand:
             fac_brand_val = st.text_input("Brand Name (contains match)", key="fac_brand_val", placeholder="e.g. Trend Arrest")
 
-    st.markdown('</div>', unsafe_allow_html=True)
-
     # ═══════════════════════════════════════
     # ADVANCED
     # ═══════════════════════════════════════
-    st.markdown('<div class="section-box-grey">', unsafe_allow_html=True)
-    st.markdown('<p class="sec-heading">⚙️ Advanced</p>', unsafe_allow_html=True)
-    st.markdown('<hr class="sec-line">', unsafe_allow_html=True)
+    st.markdown('<div class="sec-header"><span class="sec-icon"></span><span class="sec-title">⚙️ Advanced</span></div>', unsafe_allow_html=True)
 
     col13, col14 = st.columns(2)
     with col13:
@@ -1339,8 +1341,6 @@ def render_facility_compiler():
                 f'    "{fac_soi_cf_field.strip() or "custom"}": "#{{#saleOrderItem?.get(\'properties\')!=null ? ( #saleOrderItem.get(\'properties\').^[ get(\'name\')!=null and get(\'name\').getAsString().equals(\'{fac_soi_cf_field.strip() or "custom"}\') ] != null ?#saleOrderItem.get(\'properties\').^[ get(\'name\')!=null and get(\'name\').getAsString().equals(\'{fac_soi_cf_field.strip() or "custom"}\')].get(\'value\').getAsString() : \'\') : \'\'}}"\n'
                 "  }\n]\n```"
             )
-
-    st.markdown('</div>', unsafe_allow_html=True)
     st.write("")
 
     if st.button("⚙️ Compile Facility Rule", type="primary", key="fac_compile"):
@@ -1445,6 +1445,7 @@ def render_facility_compiler():
             else:
                 st.success("✅ Rule compiled")
                 st.code("#{\n  " + " and\n  ".join(parts) + "\n}", language="java")
+                st.caption("📋 **What this rule does:** Allocates the order to this facility only when all the conditions above are met.")
 
 
 # =====================================================================
@@ -1456,11 +1457,40 @@ def render_shipping_compiler():
     st.write("")
 
     # ── Forward / Reverse mini tab ────────────────────────────────
-    sp_rule_type = st.radio("Rule Type", ["forward", "reverse"],
-        format_func=lambda x: {"forward": "🚚  Forward Shipment", "reverse": "🔄  Reverse Pickup / Return"}[x],
-        horizontal=True, key="sp_rule_type",
-        help="Forward: builds a rule using #shippingPackage — selects which courier ships an outbound order.\nReverse: builds a rule using #reversePickup — selects which courier picks up a return or RTO.\n\nThese use completely different variables — mixing them causes a runtime error.")
-    is_reverse = sp_rule_type == "reverse"
+    if "sp_rule_type" not in st.session_state:
+        st.session_state.sp_rule_type = "forward"
+
+    st.markdown("""
+<style>
+div.sp-tab-row { display: flex; gap: 8px; margin-bottom: 1.2rem; }
+</style>
+""", unsafe_allow_html=True)
+
+    sp_col1, sp_col2, sp_col3 = st.columns([2, 2, 8])
+    with sp_col1:
+        fwd_active = st.session_state.sp_rule_type == "forward"
+        if st.button(
+            "🚚  Forward",
+            key="sp_tab_forward",
+            use_container_width=True,
+            type="primary" if fwd_active else "secondary"
+        ):
+            st.session_state.sp_rule_type = "forward"
+            st.rerun()
+    with sp_col2:
+        rev_active = st.session_state.sp_rule_type == "reverse"
+        if st.button(
+            "🔄  Reverse",
+            key="sp_tab_reverse",
+            use_container_width=True,
+            type="primary" if rev_active else "secondary"
+        ):
+            st.session_state.sp_rule_type = "reverse"
+            st.rerun()
+    with sp_col3:
+        st.write("")
+
+    is_reverse = st.session_state.sp_rule_type == "reverse"
 
     if is_reverse:
         st.markdown('<div class="banner-rev">🔄 <strong>Reverse Pickup mode</strong> — fields below use <code>#reversePickup</code> context</div>', unsafe_allow_html=True)
@@ -1475,9 +1505,7 @@ def render_shipping_compiler():
     if is_reverse:
 
         # ORDER
-        st.markdown('<div class="section-box">', unsafe_allow_html=True)
-        st.markdown('<p class="sec-heading">📦 Order</p>', unsafe_allow_html=True)
-        st.markdown('<hr class="sec-line">', unsafe_allow_html=True)
+        st.markdown('<div class="sec-header"><span class="sec-icon"></span><span class="sec-title">📦 Order</span></div>', unsafe_allow_html=True)
 
         col1, col2 = st.columns(2)
         with col1:
@@ -1506,12 +1534,8 @@ def render_shipping_compiler():
         with col4:
             st.write("")
 
-        st.markdown('</div>', unsafe_allow_html=True)
-
         # PICKUP LOCATION (no pincode for reverse — not supported)
-        st.markdown('<div class="section-box">', unsafe_allow_html=True)
-        st.markdown('<p class="sec-heading">📍 Pickup Location</p>', unsafe_allow_html=True)
-        st.markdown('<hr class="sec-line">', unsafe_allow_html=True)
+        st.markdown('<div class="sec-header"><span class="sec-icon"></span><span class="sec-title">📍 Pickup Location</span></div>', unsafe_allow_html=True)
 
         col5, col6 = st.columns(2)
         with col5:
@@ -1528,8 +1552,6 @@ def render_shipping_compiler():
                 rev_state_val = ",".join(extract_state_codes(rev_sel))
         with col6:
             rev_use_city, rev_city_val = city_multiselect("rev", label="City")
-
-        st.markdown('</div>', unsafe_allow_html=True)
         st.write("")
 
         if st.button("⚙️ Compile Reverse Pickup Rule", type="primary", key="rev_compile"):
@@ -1555,6 +1577,7 @@ def render_shipping_compiler():
             else:
                 st.success("✅ Rule compiled")
                 st.code("#{\n  " + " and\n  ".join(rev_parts) + "\n}", language="java")
+                st.caption("📋 **What this rule does:** Assigns this reverse pickup courier when all the conditions above are matched for the return.")
 
     # ════════════════════════════════════════════════════════════
     # FORWARD SHIPPING
@@ -1562,9 +1585,7 @@ def render_shipping_compiler():
     else:
 
         # ORDER
-        st.markdown('<div class="section-box">', unsafe_allow_html=True)
-        st.markdown('<p class="sec-heading">📦 Order</p>', unsafe_allow_html=True)
-        st.markdown('<hr class="sec-line">', unsafe_allow_html=True)
+        st.markdown('<div class="sec-header"><span class="sec-icon"></span><span class="sec-title">📦 Order</span></div>', unsafe_allow_html=True)
 
         col1, col2 = st.columns(2)
         with col1:
@@ -1604,12 +1625,8 @@ def render_shipping_compiler():
                 sp_price_min = st.text_input("Min price — exclusive > (blank = no lower bound)", key="sp_price_min", placeholder="e.g. 0").strip()
                 sp_price_max = st.text_input("Max price — inclusive <= (blank = no upper bound)", key="sp_price_max", placeholder="e.g. 6000").strip()
 
-        st.markdown('</div>', unsafe_allow_html=True)
-
         # DELIVERY LOCATION
-        st.markdown('<div class="section-box">', unsafe_allow_html=True)
-        st.markdown('<p class="sec-heading">📍 Delivery Location</p>', unsafe_allow_html=True)
-        st.markdown('<hr class="sec-line">', unsafe_allow_html=True)
+        st.markdown('<div class="sec-header"><span class="sec-icon"></span><span class="sec-title">📍 Delivery Location</span></div>', unsafe_allow_html=True)
 
         col5, col6 = st.columns(2)
         with col5:
@@ -1660,12 +1677,8 @@ def render_shipping_compiler():
         with col8:
             sp_use_country, sp_country_val, sp_country_mode = country_selectbox("sp")
 
-        st.markdown('</div>', unsafe_allow_html=True)
-
         # PRODUCT
-        st.markdown('<div class="section-box">', unsafe_allow_html=True)
-        st.markdown('<p class="sec-heading">🏷️ Product</p>', unsafe_allow_html=True)
-        st.markdown('<hr class="sec-line">', unsafe_allow_html=True)
+        st.markdown('<div class="sec-header"><span class="sec-icon"></span><span class="sec-title">🏷️ Product</span></div>', unsafe_allow_html=True)
 
         col9, col10 = st.columns(2)
         with col9:
@@ -1719,12 +1732,8 @@ def render_shipping_compiler():
         with col14:
             st.write("")
 
-        st.markdown('</div>', unsafe_allow_html=True)
-
         # ADVANCED
-        st.markdown('<div class="section-box-grey">', unsafe_allow_html=True)
-        st.markdown('<p class="sec-heading">⚙️ Advanced</p>', unsafe_allow_html=True)
-        st.markdown('<hr class="sec-line">', unsafe_allow_html=True)
+        st.markdown('<div class="sec-header"><span class="sec-icon"></span><span class="sec-title">⚙️ Advanced</span></div>', unsafe_allow_html=True)
 
         col15, col16 = st.columns(2)
         with col15:
@@ -1743,8 +1752,6 @@ def render_shipping_compiler():
                     sp_cf_strip = st.checkbox("Ignore spaces in field value", key="sp_cf_strip")
         with col16:
             st.write("")
-
-        st.markdown('</div>', unsafe_allow_html=True)
         st.write("")
 
         if st.button("⚙️ Compile Shipping Provider Rule", type="primary", key="sp_compile"):
@@ -1825,6 +1832,7 @@ def render_shipping_compiler():
             else:
                 st.success("✅ Rule compiled")
                 st.code("#{\n  " + " and\n  ".join(parts) + "\n}", language="java")
+                st.caption("📋 **What this rule does:** Assigns this shipping provider/courier when all the conditions above are matched for the outbound shipment.")
 
 
 def render_inventory_compiler():
@@ -1872,152 +1880,107 @@ def render_inventory_compiler():
 if "module" not in st.session_state:
     st.session_state.module = "FACILITY"
 
+# Pure Streamlit buttons styled as nav cards — no overlay hack
 st.markdown("""
 <style>
-.nav-wrap {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 12px;
-    margin-bottom: 2rem;
-}
-.nav-card {
-    background: #ffffff;
-    border: 1.5px solid rgba(80,80,129,0.14);
-    border-radius: 16px;
-    padding: 1.4rem 1rem 1.1rem;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.22s cubic-bezier(0.22,0.61,0.36,1);
-    box-shadow: 0 1px 4px rgba(15,14,71,0.04);
-    position: relative;
-    overflow: hidden;
-}
-.nav-card::after {
-    content: '';
-    position: absolute;
-    bottom: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, #0F0E47, #505081);
-    transform: scaleX(0);
-    transform-origin: center;
-    transition: transform 0.22s cubic-bezier(0.22,0.61,0.36,1);
-    border-radius: 0 0 16px 16px;
-}
-.nav-card:hover {
-    box-shadow: 0 6px 20px rgba(15,14,71,0.10);
-    transform: translateY(-2px);
-    border-color: rgba(39,39,87,0.25);
-}
-.nav-card:hover::after { transform: scaleX(1); }
-.nav-card.active {
-    background: linear-gradient(145deg, #0F0E47 0%, #272757 100%);
-    border-color: #0F0E47;
-    box-shadow: 0 8px 28px rgba(15,14,71,0.25);
-    transform: translateY(-3px);
-}
-.nav-card.active::after { transform: scaleX(0); }
-.nav-icon {
-    font-size: 2.2rem;
-    margin-bottom: 0.6rem;
-    display: block;
-    transition: transform 0.22s ease;
-}
-.nav-card:hover .nav-icon { transform: scale(1.08); }
-.nav-card.active .nav-icon { filter: brightness(1.4); }
-.nav-label {
-    font-size: 0.78rem;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-    color: #272757;
-    display: block;
-    transition: color 0.18s ease;
-}
-.nav-card.active .nav-label { color: rgba(255,255,255,0.95); }
-.nav-sub {
-    font-size: 0.64rem;
-    color: #8686AC;
-    margin-top: 3px;
-    display: block;
-    font-weight: 400;
-    line-height: 1.35;
-    transition: color 0.2s ease;
-    pointer-events: none;
-}
-.nav-card.active .nav-sub { color: rgba(255,255,255,0.5); }
-.nav-card:not(.active) .nav-sub { opacity: 0.8; }
-
-/* ── Nav button fully transparent overlay over card ── */
-div[data-testid="column"] .stButton {
-    position: relative !important;
-    margin-top: -5.5rem !important;
-    height: 5.5rem !important;
-    z-index: 20 !important;
-}
-div[data-testid="column"] .stButton > button {
-    opacity: 0 !important;
+/* ── Nav card buttons — pure Streamlit ── */
+div[data-testid="stHorizontalBlock"] > div[data-testid="column"] > div[data-testid="stVerticalBlock"] > div.element-container > div.stButton > button {
     width: 100% !important;
-    height: 5.5rem !important;
+    height: 110px !important;
+    border-radius: 16px !important;
+    border: 1.5px solid rgba(80,80,129,0.16) !important;
+    background: #ffffff !important;
+    color: #272757 !important;
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.04em !important;
+    box-shadow: 0 2px 8px rgba(15,14,71,0.05) !important;
+    transition: all 0.22s cubic-bezier(0.22,0.61,0.36,1) !important;
+    padding: 0 !important;
+    white-space: pre-line !important;
+    line-height: 1.5 !important;
     cursor: pointer !important;
-    border: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
+    animation: fadeSlideIn 0.4s cubic-bezier(0.22,0.61,0.36,1) both !important;
 }
-div[data-testid="column"] .stButton > button:hover {
-    transform: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
+div[data-testid="stHorizontalBlock"] > div[data-testid="column"] > div[data-testid="stVerticalBlock"] > div.element-container > div.stButton > button:hover {
+    border-color: rgba(39,39,87,0.35) !important;
+    box-shadow: 0 6px 24px rgba(15,14,71,0.13) !important;
+    transform: translateY(-3px) !important;
+    background: #f8f8fd !important;
+}
+div[data-testid="stHorizontalBlock"] > div[data-testid="column"] > div[data-testid="stVerticalBlock"] > div.element-container > div.stButton > button:active {
+    transform: translateY(-1px) !important;
+}
+
+/* ── Active nav card — set via st.button kind hack using CSS class on parent ── */
+/* Active nav card = primary button type */
+div[data-testid="stHorizontalBlock"] > div[data-testid="column"] > div[data-testid="stVerticalBlock"] > div.element-container > div.stButton > button[kind="primary"] {
+    background: linear-gradient(145deg, #0F0E47 0%, #272757 100%) !important;
+    color: rgba(255,255,255,0.95) !important;
+    border-color: #0F0E47 !important;
+    box-shadow: 0 8px 32px rgba(15,14,71,0.28) !important;
+    transform: translateY(-3px) !important;
+    height: 110px !important;
+    font-size: 0.78rem !important;
+    font-weight: 700 !important;
+    white-space: pre-line !important;
+    line-height: 1.5 !important;
+}
+div[data-testid="stHorizontalBlock"] > div[data-testid="column"] > div[data-testid="stVerticalBlock"] > div.element-container > div.stButton > button[kind="primary"]:hover {
+    background: linear-gradient(145deg, #0F0E47 0%, #272757 100%) !important;
+    box-shadow: 0 10px 36px rgba(15,14,71,0.32) !important;
+    transform: translateY(-4px) !important;
+}
+
+
+/* ── Forward/Reverse mini tabs ── */
+button[data-testid*="sp_tab"] {
+    border-radius: 10px !important;
+    font-size: 0.82rem !important;
+    font-weight: 600 !important;
+    height: 44px !important;
+    transition: all 0.2s ease !important;
+}
+
+/* ── Forward/Reverse mini tabs legacy ── */
+.fwd-rev-tabs {
+    display: flex;
+    gap: 0;
+    background: rgba(39,39,87,0.06);
+    border-radius: 12px;
+    padding: 4px;
+    margin-bottom: 1.4rem;
+    width: fit-content;
 }
 </style>
 """, unsafe_allow_html=True)
 
+MODULES = {
+    "FACILITY":       ("🏭", "Facility",  "Warehouse routing"),
+    "SHIPPING_FWD":   ("🚚", "Shipping",  "Courier selection"),
+    "INVENTORY_CALC": ("📦", "Inventory", "Stock sync"),
+    "TOOLS":          ("🔧", "Tools",     "Validator · Audit"),
+}
+
 col_a, col_b, col_c, col_d = st.columns(4)
+cols = [col_a, col_b, col_c, col_d]
+keys = list(MODULES.keys())
 
-with col_a:
-    active_a = "active" if st.session_state.module == "FACILITY" else ""
-    st.markdown(f'''<div class="nav-card {active_a}">
-        <span class="nav-icon">🏭</span>
-        <span class="nav-label">Facility</span>
-        <span class="nav-sub">Warehouse routing</span>
-    </div>''', unsafe_allow_html=True)
-    if st.button("·", key="nav_facility", use_container_width=True):
-        st.session_state.module = "FACILITY"
-        st.rerun()
-
-with col_b:
-    active_b = "active" if st.session_state.module == "SHIPPING_FWD" else ""
-    st.markdown(f'''<div class="nav-card {active_b}">
-        <span class="nav-icon">🚚</span>
-        <span class="nav-label">Shipping</span>
-        <span class="nav-sub">Courier selection</span>
-    </div>''', unsafe_allow_html=True)
-    if st.button("·", key="nav_shipping", use_container_width=True):
-        st.session_state.module = "SHIPPING_FWD"
-        st.rerun()
-
-with col_c:
-    active_c = "active" if st.session_state.module == "INVENTORY_CALC" else ""
-    st.markdown(f'''<div class="nav-card {active_c}">
-        <span class="nav-icon">📦</span>
-        <span class="nav-label">Inventory</span>
-        <span class="nav-sub">Stock sync formulas</span>
-    </div>''', unsafe_allow_html=True)
-    if st.button("·", key="nav_inventory", use_container_width=True):
-        st.session_state.module = "INVENTORY_CALC"
-        st.rerun()
-
-with col_d:
-    active_d = "active" if st.session_state.module == "TOOLS" else ""
-    st.markdown(f'''<div class="nav-card {active_d}">
-        <span class="nav-icon">🔧</span>
-        <span class="nav-label">Tools</span>
-        <span class="nav-sub">Validator · Audit · Decoder</span>
-    </div>''', unsafe_allow_html=True)
-    if st.button("·", key="nav_tools", use_container_width=True):
-        st.session_state.module = "TOOLS"
-        st.rerun()
+for col, key in zip(cols, keys):
+    icon, label, sub = MODULES[key]
+    is_active = st.session_state.module == key
+    with col:
+        clicked = st.button(
+            f"{icon}\n{label}\n{sub}",
+            key=f"nav_{key}",
+            use_container_width=True,
+            type="primary" if is_active else "secondary"
+        )
+        if clicked:
+            st.session_state.module = key
+            st.rerun()
 
 module = st.session_state.module
-
 st.write("")
 
 # ── Compiler modules ──────────────────────────────────────────────
