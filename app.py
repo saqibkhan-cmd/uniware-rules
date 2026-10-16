@@ -808,8 +808,12 @@ st.markdown("""
 # HELPER METHODS
 # =====================================================================
 
+def sq(v):
+    """Escape a value for a single-quoted SpEL literal: a single quote becomes two."""
+    return str(v).replace("'", "''")
+
 def csv_items(raw_input):
-    return [x.strip() for x in raw_input.split(",") if x.strip()]
+    return [sq(x.strip()) for x in raw_input.split(",") if x.strip()]
 
 def smart_format_string(raw_input, var_name, use_ignore_case=False, strip_spaces=False):
     if not raw_input or not raw_input.strip():
@@ -1141,8 +1145,7 @@ def render_facility_compiler():
     st.write("")
     col3, col4 = st.columns(2)
     with col3:
-        st.markdown("**Inventory Criteria**")
-        fac_inv = st.selectbox("Inventory Criteria", [
+        fac_inv = st.selectbox("Inventory Criteria ❓ (Not sure which? hover here)", [
             "NONE","hasShortTermInventory","hasCompleteShortTermInventory","hasCompleteLongTermInventory",
             "hasCompleteInventory","hasFulfillableInventory","hasInventory","hasLiveInventory",
             "hasLongTermInventory","hasCompleteMidTermInventory","hasAllocationWithinMaxOrderCapacity"],
@@ -1158,7 +1161,7 @@ def render_facility_compiler():
                 "hasLongTermInventory":                "Has Long Term Inventory",
                 "hasCompleteMidTermInventory":         "Has Complete Mid Term Inventory",
                 "hasAllocationWithinMaxOrderCapacity": "Has Allocation Within Max Order Capacity",
-            }.get(x, x), key="fac_inv", label_visibility="collapsed",
+            }.get(x, x), key="fac_inv",
             help=(
                 "Checks stock availability before allocating the order to this facility.\n\n"
                 "NO FILTER — No stock check. Order goes here regardless.\n\n"
@@ -1228,8 +1231,8 @@ def render_facility_compiler():
                     st.download_button("⬇️ Download Template", data=_t.getvalue(), file_name="pincode_template.csv", mime="text/csv", key="fac_pin_template_dl")
                 pin_file = st.file_uploader("Upload pincode file", type=["csv","txt"], key="fac_pin_file")
                 if pin_file:
-                    raw = pin_file.read().decode("utf-8", errors="ignore")
-                    all_pins = [p.strip() for p in re.split(r'[\n,]+', raw) if re.match(r'^\d{6}$', p.strip())]
+                    raw = pin_file.read().decode("utf-8-sig", errors="ignore")
+                    all_pins = list(dict.fromkeys(p.strip() for p in re.split(r'[\n,]+', raw) if re.match(r'^\d{6}$', p.strip())))
                     bad_pins = [p.strip() for p in re.split(r'[\n,]+', raw) if p.strip() and not re.match(r'^\d{6}$', p.strip())]
                     if bad_pins: st.warning(f"⚠️ Skipped {len(bad_pins)} invalid: {', '.join(bad_pins[:10])}")
                     if all_pins:
@@ -1285,13 +1288,13 @@ def render_facility_compiler():
             if fac_tag_level == "order":
                 fac_tag_val = st.text_input("Tag Value(s)", key="fac_tag_val",
                     placeholder="Single: Flooring  |  Multiple: Flooring, Board, Sample")
-                fac_tag_mode = "single" if len([t.strip() for t in fac_tag_val.split(",") if t.strip()]) <= 1 else "multi"
+                fac_tag_mode = "single" if len([sq(t.strip()) for t in fac_tag_val.split(",") if t.strip()]) <= 1 else "multi"
             else:
                 fac_tag_val = st.text_input("Tag Value(s) — one rule per tag", key="fac_tag_val",
                     placeholder="Single: Flooring  |  Multiple: Flooring, Board, Sample")
-                fac_tag_mode = "single" if len([t.strip() for t in fac_tag_val.split(",") if t.strip()]) <= 1 else "multi"
+                fac_tag_mode = "single" if len([sq(t.strip()) for t in fac_tag_val.split(",") if t.strip()]) <= 1 else "multi"
                 if fac_tag_mode == "multi":
-                    tag_list_preview = [t.strip() for t in fac_tag_val.split(",") if t.strip()]
+                    tag_list_preview = [sq(t.strip()) for t in fac_tag_val.split(",") if t.strip()]
                     st.info(f"✅ {len(tag_list_preview)} tags — will generate {len(tag_list_preview)} rules.")
 
     with col12:
@@ -1344,6 +1347,10 @@ def render_facility_compiler():
     st.write("")
 
     if st.button("⚙️ Compile Facility Rule", type="primary", key="fac_compile"):
+        if fac_use_pincode and fac_pin_mode == "Type manually" and fac_pincode_val.strip():
+            _m = list(dict.fromkeys(csv_items(fac_pincode_val)))
+            if len(_m) > 40:
+                fac_pincode_rules = [_m[i:i+40] for i in range(0, len(_m), 40)]
         warnings_list = []
         if fac_use_channel and fac_channel_val.strip():
             validate_inputs(warnings_list, "Channel Code", fac_channel_val, "channel")
@@ -1366,7 +1373,8 @@ def render_facility_compiler():
         if fac_use_state and fac_state_val.strip():
             e = format_multi_value_condition(fac_state_val, "#saleOrderItem.shippingAddress.stateCode")
             if e: parts.append(e)
-        if fac_use_pincode and fac_pincode_val.strip():
+        if fac_use_pincode and fac_pincode_val.strip() and not (len(fac_pincode_rules) > 1):
+            # Only add to parts when NOT using bulk upload (bulk rules handle pincodes per-chunk)
             e = format_multi_value_condition(fac_pincode_val, "#saleOrderItem.shippingAddress.pincode")
             if e: parts.append(e)
         if fac_use_city and fac_city_val.strip():
@@ -1389,30 +1397,30 @@ def render_facility_compiler():
                     quoted_b = ", ".join(f"'{v}'" for v in bundle_items)
                     parts.append(f"#saleOrder.saleOrderItems.^[bundleSkuCode != null and T(com.unifier.core.utils.StringUtils).equalsAny(bundleSkuCode, {quoted_b})] != null")
         if fac_use_tag and fac_tag_val.strip():
-            tag_items = [t.strip() for t in fac_tag_val.split(",") if t.strip()]
+            tag_items = [sq(t.strip()) for t in fac_tag_val.split(",") if t.strip()]
             if fac_tag_level == "order":
                 for tag in tag_items:
-                    parts.append(f"#saleOrder.saleOrderItems.^[itemType.hasAnyTag('{tag}')] != null")
+                    parts.append(f"#saleOrder.saleOrderItems.^[itemType.hasAnyTag('{sq(tag)}')] != null")
         if fac_use_brand and fac_brand_val.strip():
-            parts.append(f"#saleOrder.saleOrderItems.^[itemType.brand.contains('{fac_brand_val.strip()}')] != null")
+            parts.append(f"#saleOrder.saleOrderItems.^[itemType.brand.contains('{sq(fac_brand_val.strip())}')] != null")
         if fac_use_cf and fac_cf_field.strip():
             cf_fn = fac_cf_field.strip(); cf_val = fac_cf_value.strip() if fac_cf_value else ""
-            cf_g = f"T(com.unifier.services.utils.CustomFieldUtils).getCustomFieldValue(#saleOrder, '{cf_fn}')"
+            cf_g = f"T(com.unifier.services.utils.CustomFieldUtils).getCustomFieldValue(#saleOrder, '{sq(cf_fn)}')"
             cf_e = f'{cf_g}.replace(" ", "")' if fac_cf_strip else cf_g
-            if fac_cf_match == "contains": parts.append(f"{cf_g} != null and {cf_e}.contains('{cf_val}')")
-            elif fac_cf_match == "equalsIgnoreCase": parts.append(f"{cf_e}.equalsIgnoreCase('{cf_val}')")
+            if fac_cf_match == "contains": parts.append(f"{cf_g} != null and {cf_e}.contains('{sq(cf_val)}')")
+            elif fac_cf_match == "equalsIgnoreCase": parts.append(f"{cf_e}.equalsIgnoreCase('{sq(cf_val)}')")
             elif fac_cf_match == "not_null": parts.append(f"{cf_g} != null")
         if fac_use_soi_cf and fac_soi_cf_field.strip() and fac_soi_cf_value.strip():
             soi_fn = fac_soi_cf_field.strip(); soi_val = fac_soi_cf_value.strip()
-            soi_g = f"T(com.unifier.services.utils.CustomFieldUtils).getCustomFieldValue(#saleOrderItem.itemType, '{soi_fn}')"
-            parts.append(f"{soi_g} != null"); parts.append(f"{soi_g}.equals('{soi_val}')")
+            soi_g = f"T(com.unifier.services.utils.CustomFieldUtils).getCustomFieldValue(#saleOrderItem, '{sq(soi_fn)}')"
+            parts.append(f"{soi_g} != null"); parts.append(f"{soi_g}.equals('{sq(soi_val)}')")
 
         if not parts and not fac_pincode_rules and not (fac_use_tag and fac_tag_val.strip() and fac_tag_level == "sku"):
             st.error("Please fill in at least one condition.")
         else:
             sku_tag_items = []
             if fac_use_tag and fac_tag_val.strip() and fac_tag_level == "sku":
-                sku_tag_items = [t.strip() for t in fac_tag_val.split(",") if t.strip()]
+                sku_tag_items = [sq(t.strip()) for t in fac_tag_val.split(",") if t.strip()]
 
             if sku_tag_items:
                 if fac_pincode_rules and len(fac_pincode_rules) > 1:
@@ -1423,14 +1431,14 @@ def render_facility_compiler():
                             tag_parts = list(parts)
                             quoted = ", ".join(f"'{p}'" for p in chunk)
                             tag_parts.append(f"#saleOrderItem.shippingAddress.pincode == '{chunk[0]}'" if len(chunk)==1 else f"T(com.unifier.core.utils.StringUtils).equalsAny(#saleOrderItem.shippingAddress.pincode, {quoted})")
-                            tag_parts.append(f"#saleOrderItem.itemType.hasAnyTag('{tag}')")
+                            tag_parts.append(f"#saleOrderItem.itemType.hasAnyTag('{sq(tag)}')")
                             with st.expander(f"{tag} — Group {i} ({len(chunk)} pincodes)", expanded=(i==1)):
                                 st.code("#{\n  " + " and\n  ".join(tag_parts) + "\n}", language="java")
                 else:
                     st.success(f"✅ Generated {len(sku_tag_items)} rule(s) — one per tag")
                     st.info("🔖 SKU-level rules — orders with mixed tags will split across facilities if splitting is enabled.")
                     for tag in sku_tag_items:
-                        tag_parts = list(parts) + [f"#saleOrderItem.itemType.hasAnyTag('{tag}')"]
+                        tag_parts = list(parts) + [f"#saleOrderItem.itemType.hasAnyTag('{sq(tag)}')"]
                         with st.expander(f"🏷️ Rule for tag: {tag}", expanded=True):
                             st.caption(f"Point this rule to the **{tag} facility** in Uniware.")
                             st.code("#{\n  " + " and\n  ".join(tag_parts) + "\n}", language="java")
@@ -1555,6 +1563,8 @@ div.sp-tab-row { display: flex; gap: 8px; margin-bottom: 1.2rem; }
         st.write("")
 
         if st.button("⚙️ Compile Reverse Pickup Rule", type="primary", key="rev_compile"):
+            if rev_use_weight and rev_weight_min and rev_weight_max and re.match(r'^\d+(\.\d+)?$', rev_weight_min) and re.match(r'^\d+(\.\d+)?$', rev_weight_max) and float(rev_weight_min) >= float(rev_weight_max):
+                st.warning("⚠️ Box weight: minimum must be less than maximum — this rule can never match.")
             rev_parts = []
             if rev_channel_val.strip():
                 e = smart_format_string(rev_channel_val, "#reversePickup.saleOrder.channel.code", use_ignore_case=True)
@@ -1660,8 +1670,8 @@ div.sp-tab-row { display: flex; gap: 8px; margin-bottom: 1.2rem; }
                         st.download_button("⬇️ Download Template", data=_t2.getvalue(), file_name="pincode_template.csv", mime="text/csv", key="sp_pin_template_dl")
                     sp_pin_file = st.file_uploader("Upload pincode file", type=["csv","txt"], key="sp_pin_file")
                     if sp_pin_file:
-                        raw_sp = sp_pin_file.read().decode("utf-8", errors="ignore")
-                        all_sp_pins = [p.strip() for p in re.split(r'[\n,]+', raw_sp) if re.match(r'^\d{6}$', p.strip())]
+                        raw_sp = sp_pin_file.read().decode("utf-8-sig", errors="ignore")
+                        all_sp_pins = list(dict.fromkeys(p.strip() for p in re.split(r'[\n,]+', raw_sp) if re.match(r'^\d{6}$', p.strip())))
                         bad_sp = [p.strip() for p in re.split(r'[\n,]+', raw_sp) if p.strip() and not re.match(r'^\d{6}$', p.strip())]
                         if bad_sp: st.warning(f"⚠️ Skipped {len(bad_sp)} invalid")
                         if all_sp_pins:
@@ -1756,6 +1766,13 @@ div.sp-tab-row { display: flex; gap: 8px; margin-bottom: 1.2rem; }
 
         if st.button("⚙️ Compile Shipping Provider Rule", type="primary", key="sp_compile"):
             warnings_list = []
+            if sp_use_pincode and sp_pin_mode == "Type manually" and sp_pincode_val.strip():
+                _m = list(dict.fromkeys(csv_items(sp_pincode_val)))
+                if len(_m) > 40:
+                    sp_pincode_rules = [_m[i:i+40] for i in range(0, len(_m), 40)]
+            for _lo, _hi, _lbl in [(sp_weight_min, sp_weight_max, "Weight"), (sp_price_min, sp_price_max, "Price")]:
+                if _lo and _hi and re.match(r'^\d+(\.\d+)?$', _lo) and re.match(r'^\d+(\.\d+)?$', _hi) and float(_lo) >= float(_hi):
+                    warnings_list.append(f"**{_lbl}:** minimum ({_lo}) must be less than maximum ({_hi}) — this rule can never match.")
             if sp_use_channel and sp_channel_val.strip(): validate_inputs(warnings_list, "Channel Code", sp_channel_val, "channel")
             if sp_use_pincode and sp_pincode_val.strip(): validate_inputs(warnings_list, "Pincode", sp_pincode_val, "pincode")
             if sp_use_weight:
@@ -1783,7 +1800,8 @@ div.sp-tab-row { display: flex; gap: 8px; margin-bottom: 1.2rem; }
             if sp_use_state and sp_state_val.strip():
                 e = format_multi_value_condition(sp_state_val, "#shippingPackage.shippingAddress.stateCode")
                 if e: parts.append(e)
-            if sp_use_pincode and sp_pincode_val.strip():
+            if sp_use_pincode and sp_pincode_val.strip() and not (len(sp_pincode_rules) > 1):
+                # Only add to parts when NOT using bulk upload (bulk rules handle pincodes per-chunk)
                 e = format_multi_value_condition(sp_pincode_val, "#shippingPackage.shippingAddress.pincode")
                 if e: parts.append(e)
             if sp_use_city and sp_city_val.strip():
@@ -1795,7 +1813,7 @@ div.sp-tab-row { display: flex; gap: 8px; margin-bottom: 1.2rem; }
             if sp_use_items and sp_items_val:
                 parts.append(f"#shippingPackage.saleOrderItems.size() {sp_items_op} {sp_items_val}")
             if sp_use_tag and sp_tag_val.strip():
-                parts.append(f"#shippingPackage.saleOrderItems.^[itemType.hasAnyTag('{sp_tag_val.strip()}')] != null")
+                parts.append(f"#shippingPackage.saleOrderItems.^[itemType.hasAnyTag('{sq(sp_tag_val.strip())}')] != null")
             if sp_use_sku and sp_sku_val.strip():
                 sku_items = csv_items(sp_sku_val)
                 if sku_items:
@@ -1810,13 +1828,13 @@ div.sp-tab-row { display: flex; gap: 8px; margin-bottom: 1.2rem; }
                         quoted_b = ", ".join(f"'{v}'" for v in bundle_items)
                         parts.append(f"#shippingPackage.saleOrderItems.^[bundleSkuCode != null and T(com.unifier.core.utils.StringUtils).equalsAny(bundleSkuCode, {quoted_b})] != null")
             if sp_use_spt and sp_spt_val:
-                parts.append(f"#shippingPackage.shippingPackageType.code == '{sp_spt_val}'")
+                parts.append(f"#shippingPackage.shippingPackageType.code == '{sq(sp_spt_val)}'")
             if sp_use_cf and sp_cf_field.strip():
                 sp_fn = sp_cf_field.strip(); sp_val = sp_cf_value.strip() if sp_cf_value else ""
-                sp_g = f"T(com.unifier.services.utils.CustomFieldUtils).getCustomFieldValue(#shippingPackage.saleOrder, '{sp_fn}')"
+                sp_g = f"T(com.unifier.services.utils.CustomFieldUtils).getCustomFieldValue(#shippingPackage.saleOrder, '{sq(sp_fn)}')"
                 sp_e = f'{sp_g}.replace(" ", "")' if sp_cf_strip else sp_g
-                if sp_cf_match == "contains": parts.append(f"{sp_g} != null and {sp_e}.contains('{sp_val}')")
-                elif sp_cf_match == "equalsIgnoreCase": parts.append(f"{sp_e}.equalsIgnoreCase('{sp_val}')")
+                if sp_cf_match == "contains": parts.append(f"{sp_g} != null and {sp_e}.contains('{sq(sp_val)}')")
+                elif sp_cf_match == "equalsIgnoreCase": parts.append(f"{sp_e}.equalsIgnoreCase('{sq(sp_val)}')")
                 elif sp_cf_match == "not_null": parts.append(f"{sp_g} != null")
 
             if not parts and not sp_pincode_rules:
