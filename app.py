@@ -812,6 +812,27 @@ def sq(v):
     """Escape a value for a single-quoted SpEL literal: a single quote becomes two."""
     return str(v).replace("'", "''")
 
+PIN_LIMIT_HELP = ("How many pincodes go into each rule. A longer list is split into several rules of this size, "
+                  "so you can copy them one by one. It starts at 40, the size we used before. "
+                  "Enter 0 for no limit: every pincode goes into ONE rule. "
+                  "A very long single rule may be rejected by Uniware, so check it saves.")
+DEFAULT_PINS_PER_RULE = 40   # only the pre-filled value shown in the UI; the user can change it
+
+def effective_pin_limit(limit):
+    """Return the per-rule pincode limit as an int, or None when there is no limit (0, empty or invalid)."""
+    try:
+        n = int(limit)
+    except (TypeError, ValueError):
+        return None
+    return n if n > 0 else None
+
+def split_pincodes(pins, limit):
+    """Split a pincode list into groups of at most `limit`. 0 / empty means no limit: one group."""
+    n = effective_pin_limit(limit)
+    if n is None:
+        return [list(pins)] if pins else []
+    return [pins[i:i + n] for i in range(0, len(pins), n)]
+
 def csv_items(raw_input):
     return [sq(x.strip()) for x in raw_input.split(",") if x.strip()]
 
@@ -1214,9 +1235,11 @@ def render_facility_compiler():
     with col6:
         st.markdown("**Pincode**")
         fac_use_pincode = st.checkbox("Apply Pincode Filter", key="fac_use_pincode",
-            help="Restrict this rule to orders going to specific delivery pincodes.\n\nUseful for hyper-local routing — e.g. send orders in certain pincodes to a nearby dark store.\n\nA single rule handles up to ~40 pincodes reliably. Use the file upload for larger lists.")
-        fac_pincode_val = ""; fac_pincode_rules = []
+            help="Restrict this rule to orders going to specific delivery pincodes.\n\nUseful for hyper-local routing — e.g. send orders in certain pincodes to a nearby dark store.\n\nLong lists are split into several rules automatically. You choose how many pincodes go in each rule.")
+        fac_pincode_val = ""; fac_pincode_rules = []; fac_pin_limit = DEFAULT_PINS_PER_RULE
         if fac_use_pincode:
+            fac_pin_limit = st.number_input("Pincodes per rule (0 = no limit)", min_value=0, value=DEFAULT_PINS_PER_RULE, step=1,
+                key="fac_pin_limit", help=PIN_LIMIT_HELP)
             fac_pin_mode = st.radio("Entry method", ["Type manually", "Upload file (large lists)"],
                 horizontal=True, key="fac_pin_mode")
             if fac_pin_mode == "Type manually":
@@ -1236,7 +1259,7 @@ def render_facility_compiler():
                     bad_pins = [p.strip() for p in re.split(r'[\n,]+', raw) if p.strip() and not re.match(r'^\d{6}$', p.strip())]
                     if bad_pins: st.warning(f"⚠️ Skipped {len(bad_pins)} invalid: {', '.join(bad_pins[:10])}")
                     if all_pins:
-                        chunks = [all_pins[i:i+40] for i in range(0, len(all_pins), 40)]
+                        chunks = split_pincodes(all_pins, fac_pin_limit)
                         fac_pincode_rules = chunks
                         st.success(f"✅ {len(all_pins)} pincodes → {len(chunks)} rule(s)")
                         fac_pincode_val = ",".join(all_pins)
@@ -1349,8 +1372,9 @@ def render_facility_compiler():
     if st.button("⚙️ Compile Facility Rule", type="primary", key="fac_compile"):
         if fac_use_pincode and fac_pin_mode == "Type manually" and fac_pincode_val.strip():
             _m = list(dict.fromkeys(csv_items(fac_pincode_val)))
-            if len(_m) > 40:
-                fac_pincode_rules = [_m[i:i+40] for i in range(0, len(_m), 40)]
+            _lim = effective_pin_limit(fac_pin_limit)
+            if _lim and len(_m) > _lim:
+                fac_pincode_rules = split_pincodes(_m, _lim)
         warnings_list = []
         if fac_use_channel and fac_channel_val.strip():
             validate_inputs(warnings_list, "Channel Code", fac_channel_val, "channel")
@@ -1654,9 +1678,11 @@ div.sp-tab-row { display: flex; gap: 8px; margin-bottom: 1.2rem; }
         with col6:
             st.markdown("**Pincode**")
             sp_use_pincode = st.checkbox("Apply Pincode Filter", key="sp_use_pincode",
-                help="Restrict courier selection to specific delivery pincodes.\n\nA single rule handles up to ~40 pincodes. Use file upload for larger lists.")
-            sp_pincode_val = ""; sp_pincode_rules = []
+                help="Restrict courier selection to specific delivery pincodes.\n\nLong lists are split into several rules automatically. You choose how many pincodes go in each rule.")
+            sp_pincode_val = ""; sp_pincode_rules = []; sp_pin_limit = DEFAULT_PINS_PER_RULE
             if sp_use_pincode:
+                sp_pin_limit = st.number_input("Pincodes per rule (0 = no limit)", min_value=0, value=DEFAULT_PINS_PER_RULE, step=1,
+                    key="sp_pin_limit", help=PIN_LIMIT_HELP)
                 sp_pin_mode = st.radio("Entry method", ["Type manually","Upload file (large lists)"], horizontal=True, key="sp_pin_mode")
                 if sp_pin_mode == "Type manually":
                     sp_pincode_val = st.text_area("Pincode(s)", key="sp_pincode_val",
@@ -1675,7 +1701,7 @@ div.sp-tab-row { display: flex; gap: 8px; margin-bottom: 1.2rem; }
                         bad_sp = [p.strip() for p in re.split(r'[\n,]+', raw_sp) if p.strip() and not re.match(r'^\d{6}$', p.strip())]
                         if bad_sp: st.warning(f"⚠️ Skipped {len(bad_sp)} invalid")
                         if all_sp_pins:
-                            sp_chunks = [all_sp_pins[i:i+40] for i in range(0, len(all_sp_pins), 40)]
+                            sp_chunks = split_pincodes(all_sp_pins, sp_pin_limit)
                             sp_pincode_rules = sp_chunks
                             st.success(f"✅ {len(all_sp_pins)} pincodes → {len(sp_chunks)} rule(s)")
                             sp_pincode_val = ",".join(all_sp_pins)
@@ -1768,8 +1794,9 @@ div.sp-tab-row { display: flex; gap: 8px; margin-bottom: 1.2rem; }
             warnings_list = []
             if sp_use_pincode and sp_pin_mode == "Type manually" and sp_pincode_val.strip():
                 _m = list(dict.fromkeys(csv_items(sp_pincode_val)))
-                if len(_m) > 40:
-                    sp_pincode_rules = [_m[i:i+40] for i in range(0, len(_m), 40)]
+                _lim = effective_pin_limit(sp_pin_limit)
+                if _lim and len(_m) > _lim:
+                    sp_pincode_rules = split_pincodes(_m, _lim)
             for _lo, _hi, _lbl in [(sp_weight_min, sp_weight_max, "Weight"), (sp_price_min, sp_price_max, "Price")]:
                 if _lo and _hi and re.match(r'^\d+(\.\d+)?$', _lo) and re.match(r'^\d+(\.\d+)?$', _hi) and float(_lo) >= float(_hi):
                     warnings_list.append(f"**{_lbl}:** minimum ({_lo}) must be less than maximum ({_hi}) — this rule can never match.")
